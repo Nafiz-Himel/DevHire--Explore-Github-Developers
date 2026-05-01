@@ -5,22 +5,25 @@ function Developers({ onSignOut, onNavigate }) {
   const [collapsed, setCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [profile, setProfile] = useState(null);
+  const [repos, setRepos] = useState([]);
+  const [reposLoading, setReposLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showDetails, setShowDetails] = useState(false);
   const [notification, setNotification] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
+  const [shortlistedRepos, setShortlistedRepos] = useState([]);
 
   useEffect(() => {
     const savedRecent = JSON.parse(localStorage.getItem('recentSearches') || '[]');
     setRecentSearches(savedRecent);
+    const savedRepos = JSON.parse(localStorage.getItem('shortlistedRepos') || '[]');
+    setShortlistedRepos(savedRepos);
   }, []);
 
   const showNotification = (msg) => {
     setNotification(msg);
-    setTimeout(() => {
-      setNotification('');
-    }, 3000);
+    setTimeout(() => setNotification(''), 3000);
   };
 
   const updateRecentSearches = (username) => {
@@ -31,30 +34,22 @@ function Developers({ onSignOut, onNavigate }) {
 
   const handleSearch = async (targetUsername) => {
     const username = targetUsername || searchTerm.trim();
-    if (!username) {
-      setError('Please enter a GitHub username');
-      return;
-    }
+    if (!username) { setError('Please enter a GitHub username'); return; }
 
     setLoading(true);
     setError('');
     setProfile(null);
+    setRepos([]);
     setShowDetails(false);
 
     try {
       const response = await fetch(`https://api.github.com/users/${username}`, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json'
-        }
+        headers: { 'Accept': 'application/vnd.github.v3+json' }
       });
 
-      if (response.status === 404) {
-        throw new Error('User not found. Please check the spelling.');
-      } else if (response.status === 403) {
-        throw new Error('API limit exceeded. Try again later.');
-      } else if (!response.ok) {
-        throw new Error('Network error. Please try again.');
-      }
+      if (response.status === 404) throw new Error('User not found. Please check the spelling.');
+      else if (response.status === 403) throw new Error('API limit exceeded. Try again later.');
+      else if (!response.ok) throw new Error('Network error. Please try again.');
 
       const data = await response.json();
       setProfile(data);
@@ -62,7 +57,6 @@ function Developers({ onSignOut, onNavigate }) {
 
       const currentCount = parseInt(localStorage.getItem('searchCount') || '0');
       localStorage.setItem('searchCount', (currentCount + 1).toString());
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,18 +64,55 @@ function Developers({ onSignOut, onNavigate }) {
     }
   };
 
+  const fetchRepos = async (username) => {
+    setReposLoading(true);
+    try {
+      const response = await fetch(
+        `https://api.github.com/users/${username}/repos?sort=updated&per_page=30`,
+        { headers: { 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      if (!response.ok) throw new Error('Failed to fetch repos');
+      const data = await response.json();
+      setRepos(data);
+    } catch (err) {
+      showNotification('Could not load repositories.');
+    } finally {
+      setReposLoading(false);
+    }
+  };
+
+  const handleViewDetails = () => {
+    setShowDetails(true);
+    fetchRepos(profile.login);
+  };
+
   const addToShortlist = () => {
     const savedShortlist = JSON.parse(localStorage.getItem('devShortlist') || '[]');
     const isAlreadyAdded = savedShortlist.some(item => item.id === profile.id);
-
     if (!isAlreadyAdded) {
-      const updatedShortlist = [...savedShortlist, profile];
-      localStorage.setItem('devShortlist', JSON.stringify(updatedShortlist));
+      localStorage.setItem('devShortlist', JSON.stringify([...savedShortlist, profile]));
       showNotification(`${profile.name || profile.login} added to shortlist!`);
     } else {
       showNotification('Already in shortlist.');
     }
   };
+
+  const toggleRepoShortlist = (repo) => {
+    const current = JSON.parse(localStorage.getItem('shortlistedRepos') || '[]');
+    const isAdded = current.some(r => r.id === repo.id);
+    let updated;
+    if (isAdded) {
+      updated = current.filter(r => r.id !== repo.id);
+      showNotification(`"${repo.name}" removed from repo shortlist.`);
+    } else {
+      updated = [...current, { ...repo, ownerLogin: profile.login, ownerAvatar: profile.avatar_url }];
+      showNotification(`"${repo.name}" added to repo shortlist!`);
+    }
+    localStorage.setItem('shortlistedRepos', JSON.stringify(updated));
+    setShortlistedRepos(updated);
+  };
+
+  const isRepoShortlisted = (repoId) => shortlistedRepos.some(r => r.id === repoId);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -90,18 +121,13 @@ function Developers({ onSignOut, onNavigate }) {
 
   return (
     <div className={`dashboard-shell ${collapsed ? 'collapsed' : ''}`}>
-      {notification && (
-        <div className="custom-toast">
-          {notification}
-        </div>
-      )}
+      {notification && <div className="custom-toast">{notification}</div>}
 
       <div className={`side ${collapsed ? 'collapsed' : ''}`}>
         <div className="side-logo">
           <div className="logo-mark">DH</div>
           <div className="logo-copy">DevHire</div>
         </div>
-
         <div className="side-nav">
           <button type="button" className="nav-link" onClick={() => onNavigate('dashboard')}>
             <span className="nav-icon">🏠</span>
@@ -116,7 +142,6 @@ function Developers({ onSignOut, onNavigate }) {
             <span className="nav-label">Shortlist</span>
           </button>
         </div>
-
         <div className="side-footer">
           <button type="button" className="footer-button" onClick={() => setCollapsed((v) => !v)}>
             <span className="nav-icon">↔</span>
@@ -165,15 +190,7 @@ function Developers({ onSignOut, onNavigate }) {
                       <button
                         key={name}
                         onClick={() => handleSearch(name)}
-                        style={{
-                          background: '#f0f2f5',
-                          border: 'none',
-                          padding: '4px 10px',
-                          borderRadius: '15px',
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          color: '#2563eb'
-                        }}
+                        style={{ background: '#f0f2f5', border: 'none', padding: '4px 10px', borderRadius: '15px', fontSize: '0.8rem', cursor: 'pointer', color: '#2563eb' }}
                       >
                         {name}
                       </button>
@@ -185,6 +202,7 @@ function Developers({ onSignOut, onNavigate }) {
             {error && <p className="error-message" style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
           </div>
 
+          {/* Search result card (before view details) */}
           {profile && !showDetails && (
             <div className="search-results-container">
               <div className="popular-developer-card">
@@ -193,19 +211,24 @@ function Developers({ onSignOut, onNavigate }) {
                   <span className="popular-username">{profile.name || profile.login}</span>
                   <span className="popular-link">@{profile.login}</span>
                 </div>
-                <button type="button" className="popular-button" onClick={() => setShowDetails(true)}>
+                <button type="button" className="popular-button" onClick={handleViewDetails}>
                   View Details
                 </button>
               </div>
             </div>
           )}
 
+          {/* Full profile details with repos */}
           {profile && showDetails && (
             <div className="profile-details-wrapper">
-              <button className="back-link" onClick={() => setShowDetails(false)} style={{ marginBottom: '20px', cursor: 'pointer', background: 'none', border: 'none', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <button
+                className="back-link"
+                onClick={() => setShowDetails(false)}
+                style={{ marginBottom: '20px', cursor: 'pointer', background: 'none', border: 'none', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
                 ← Back to results
               </button>
-              
+
               <div className="profile-info">
                 <div className="profile-header">
                   <img src={profile.avatar_url} alt={profile.login} className="profile-avatar" />
@@ -213,17 +236,15 @@ function Developers({ onSignOut, onNavigate }) {
                     <h2>{profile.name || profile.login}</h2>
                     <p className="profile-handle">@{profile.login}</p>
                     {profile.bio && <p className="profile-bio">{profile.bio}</p>}
-                    
                     <div className="profile-stats">
                       <div><span className="stat-value">{profile.public_repos}</span> Repositories</div>
                       <div><span className="stat-value">{profile.followers}</span> Followers</div>
                       <div><span className="stat-value">{profile.following}</span> Following</div>
                     </div>
                   </div>
-
                   <div className="action-buttons" style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignSelf: 'flex-start' }}>
                     <a href={profile.html_url} target="_blank" rel="noopener noreferrer" className="popular-button" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                       GitHub
+                      GitHub
                     </a>
                     <button onClick={addToShortlist} className="popular-button" style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none' }}>
                       + Shortlist
@@ -232,28 +253,68 @@ function Developers({ onSignOut, onNavigate }) {
                 </div>
 
                 <div className="profile-details-grid">
-                  <div>
-                    <strong>Location</strong>
-                    <p>{profile.location || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <strong>Company</strong>
-                    <p>{profile.company || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <strong>Joined</strong>
-                    <p>{new Date(profile.created_at).toLocaleDateString()}</p>
-                  </div>
+                  <div><strong>Location</strong><p>{profile.location || 'N/A'}</p></div>
+                  <div><strong>Company</strong><p>{profile.company || 'N/A'}</p></div>
+                  <div><strong>Joined</strong><p>{new Date(profile.created_at).toLocaleDateString()}</p></div>
                 </div>
+              </div>
+
+              {/* Repositories Section */}
+              <div className="repos-section">
+                <div className="repos-section-header">
+                  <h3>Repositories</h3>
+                  <span className="repos-shortlisted-badge">
+                    {shortlistedRepos.filter(r => r.ownerLogin === profile.login).length} shortlisted
+                  </span>
+                </div>
+
+                {reposLoading ? (
+                  <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>Loading repositories...</div>
+                ) : (
+                  <div className="repos-grid">
+                    {repos.map((repo) => {
+                      const isShortlisted = isRepoShortlisted(repo.id);
+                      return (
+                        <div key={repo.id} className={`repo-card ${isShortlisted ? 'repo-card--shortlisted' : ''}`}>
+                          <div className="repo-card-top">
+                            <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="repo-name">
+                              {repo.name}
+                            </a>
+                            <button
+                              className={`repo-shortlist-btn ${isShortlisted ? 'active' : ''}`}
+                              onClick={() => toggleRepoShortlist(repo)}
+                              title={isShortlisted ? 'Remove from shortlist' : 'Add to shortlist'}
+                            >
+                              {isShortlisted ? '★ Shortlisted' : '☆ Shortlist'}
+                            </button>
+                          </div>
+                          {repo.description && (
+                            <p className="repo-description">{repo.description}</p>
+                          )}
+                          <div className="repo-meta">
+                            {repo.language && (
+                              <span className="repo-lang">
+                                <span className="lang-dot" />
+                                {repo.language}
+                              </span>
+                            )}
+                            <span className="repo-stat">⭐ {repo.stargazers_count}</span>
+                            <span className="repo-stat">🍴 {repo.forks_count}</span>
+                            {repo.license && <span className="repo-stat">📄 {repo.license.spdx_id}</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
+          {/* Popular developers section */}
           {!profile && !showDetails && (
             <div className="popular-developers-section" style={{ marginTop: '40px' }}>
-              <div className="section-heading">
-                <h2>POPULAR DEVELOPERS</h2>
-              </div>
+              <div className="section-heading"><h2>POPULAR DEVELOPERS</h2></div>
               <div className="popular-developers-grid">
                 {[
                   { username: 'octocat', avatar: 'https://github.com/octocat.png' },
@@ -265,21 +326,11 @@ function Developers({ onSignOut, onNavigate }) {
                     <img src={dev.avatar} alt={dev.username} className="popular-avatar" />
                     <div className="popular-details">
                       <span className="popular-username">{dev.username}</span>
-                      <a 
-                        href={`https://github.com/${dev.username}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="popular-link"
-                        style={{ textDecoration: 'none', color: '#2563eb', fontSize: '0.85rem' }}
-                      >
+                      <a href={`https://github.com/${dev.username}`} target="_blank" rel="noopener noreferrer" className="popular-link" style={{ textDecoration: 'none', color: '#2563eb', fontSize: '0.85rem' }}>
                         GitHub profile
                       </a>
                     </div>
-                    <button 
-                      type="button" 
-                      className="popular-button" 
-                      onClick={() => handleSearch(dev.username)}
-                    >
+                    <button type="button" className="popular-button" onClick={() => handleSearch(dev.username)}>
                       View Details
                     </button>
                   </div>

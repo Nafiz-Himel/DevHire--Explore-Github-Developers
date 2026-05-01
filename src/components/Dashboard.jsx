@@ -12,14 +12,14 @@ function Dashboard({ onSignOut, onNavigate }) {
 
   useEffect(() => {
     const savedShortlist = JSON.parse(localStorage.getItem('devShortlist') || '[]');
-    const totalRepos = savedShortlist.reduce((acc, curr) => acc + (curr.public_repos || 0), 0);
-    
+    // Count only shortlisted repos, not all profile repos
+    const shortlistedRepos = JSON.parse(localStorage.getItem('shortlistedRepos') || '[]');
     const savedSearchCount = parseInt(localStorage.getItem('searchCount') || '0');
 
     setStats({
-      searched: savedSearchCount, 
+      searched: savedSearchCount,
       shortlisted: savedShortlist.length,
-      repos: totalRepos
+      repos: shortlistedRepos.length   // only shortlisted repos count
     });
   }, []);
 
@@ -106,7 +106,7 @@ function Dashboard({ onSignOut, onNavigate }) {
             <article className="dashboard-card">
               <div className="card-content">
                 <div className="card-info">
-                  <h3>TOTAL REPOSITORIES (SHORTLIST)</h3>
+                  <h3>SHORTLISTED REPOSITORIES</h3>
                   <p className="card-value">{stats.repos}</p>
                 </div>
                 <div className="card-icon-bg">📁</div>
@@ -123,7 +123,7 @@ function Dashboard({ onSignOut, onNavigate }) {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip cursor={{fill: 'transparent'}} />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="value" fill="#4db6ac" radius={[4, 4, 0, 0]} barSize={50} />
                 </BarChart>
               </ResponsiveContainer>
@@ -134,13 +134,7 @@ function Dashboard({ onSignOut, onNavigate }) {
               <p>Proportional share across categories</p>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
+                  <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
