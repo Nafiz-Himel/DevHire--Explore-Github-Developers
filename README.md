@@ -56,21 +56,21 @@ Deployment:
 ---
 
 ## 🧱 Project Structure
+
+```text
 DevHire--Explore-Github-Developers/
-│
 ├── public/
-│
 ├── src/
-│ ├── assets/
-│ ├── components/
-│ ├── App.jsx
-│ ├── main.jsx
-│
+│   ├── assets/
+│   ├── components/
+│   ├── App.jsx
+│   └── main.jsx
 ├── index.html
 ├── package.json
 ├── package-lock.json
 ├── vite.config.js
-├── README.md
+└── README.md
+```
 
 ## ⚙️ Installation & Setup
 
