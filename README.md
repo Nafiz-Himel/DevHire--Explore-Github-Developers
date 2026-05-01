@@ -56,7 +56,6 @@ Deployment:
 ---
 
 ## 🧱 Project Structure
-
 DevHire--Explore-Github-Developers/
 │
 ├── public/
@@ -72,8 +71,6 @@ DevHire--Explore-Github-Developers/
 ├── package-lock.json
 ├── vite.config.js
 ├── README.md
-
----
 
 ## ⚙️ Installation & Setup
 
