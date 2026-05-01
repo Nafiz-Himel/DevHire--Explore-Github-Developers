@@ -61,10 +61,10 @@ DevHire--Explore-Github-Developers/
 ├── public/
 │
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── App.jsx
-│   ├── main.jsx
+│ ├── assets/
+│ ├── components/
+│ ├── App.jsx
+│ ├── main.jsx
 │
 ├── index.html
 ├── package.json
