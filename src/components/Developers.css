@@ -358,3 +358,65 @@
   font-size: 0.78rem;
   color: #64748b;
 }
+
+
+/* Developers.css ফাইলে নিচের অংশটুকু যোগ করুন */
+
+/* সার্চ বার রেসপনসিভ করা */
+@media (max-width: 640px) {
+  .search-bar {
+    flex-direction: column; /* ছোট স্ক্রিনে ইনপুট এবং বাটন নিচে নিচে আসবে */
+    max-width: 100%;
+  }
+
+  .search-bar button {
+    width: 100%;
+  }
+}
+
+/* প্রোফাইল হেডার এবং স্ট্যাটাস রেসপনসিভ করা */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column; /* অবতার এবং ডিটেইলস নিচে নিচে আসবে */
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .profile-details-grid {
+    grid-template-columns: 1fr; /* লোকেশন, কোম্পানি ইত্যাদি ১ কলামে আসবে */
+  }
+
+  .action-buttons {
+    margin-left: 0 !important;
+    margin-top: 20px;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* রিপোজিটরি গ্রিড রেসপনসিভ করা */
+@media (max-width: 980px) {
+  .repos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* কার্ডের সাইজ কিছুটা কমানো */
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .repos-grid {
+    grid-template-columns: 1fr; 
+  }
+
+  .profile-info {
+    padding: 20px;
+  }
+
+  .repo-card {
+    padding: 16px;
+  }
+}
