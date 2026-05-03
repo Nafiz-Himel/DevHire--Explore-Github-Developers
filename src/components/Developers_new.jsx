@@ -454,16 +454,20 @@ function Developers({ onSignOut, onNavigate }) {
   return (
     <Sidebar currentPage="developers" onNavigate={onNavigate} onSignOut={handleSignOut}>
       <div className="dashboard">
+        {!userData && (
         <div className="dashboard-nav">
           <div className="dashboard-title">Developers</div>
           <div className="dashboard-logo">DH</div>
         </div>
+        )}
 
         <div className="dashboard-main">
+          {!userData && (
           <div className="dashboard-heading">
             <h1>Developers</h1>
             <p>Search and explore GitHub developers.</p>
           </div>
+          )}
 
           <div className="search-section">
             <form onSubmit={handleSearch} className="search-form">

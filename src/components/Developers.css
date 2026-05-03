@@ -866,6 +866,7 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+
 @media (max-width: 768px) {
   .developers-container {
     padding: 16px;
@@ -899,37 +900,39 @@
   }
 
    .review-modal {
-     padding: 16px;
-     width: 95%;
-   }
+      padding: 16px;
+      width: 95%;
+    }
 
    .review-actions {
-    flex-direction: column;
-  }
+     flex-direction: column;
+   }
 
-  .confirm-btn,
-  .cancel-btn {
-    width: 100%;
-    text-align: center;
-  }
+   .confirm-btn,
+   .cancel-btn {
+     width: 100%;
+     text-align: center;
+   }
 
-  .popular-profiles-section {
-    padding: 16px;
-  }
+   .popular-profiles-section {
+     padding: 16px;
+   }
 
-  .profile-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
+   .profile-stats {
+     grid-template-columns: repeat(2, 1fr);
+   }
 
-  .role-input {
-    font-size: 0.85rem;
-    padding: 8px 12px;
-  }
+   .role-input {
+     font-size: 0.85rem;
+     padding: 8px 12px;
+   }
 
-  .back-to-select {
-    font-size: 0.75rem;
-  }
+   .back-to-select {
+     font-size: 0.75rem;
+   }
 }
+
+
 
 @media (max-width: 480px) {
   .developers-container {
@@ -953,6 +956,158 @@
     padding: 10px 20px;
     font-size: 0.95rem;
   }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .profile-info h2 {
+    font-size: 1.2rem;
+  }
+
+  .contact-info {
+    padding: 8px;
+  }
+
+  .contact-item {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+
+  .contact-icon {
+    font-size: 1rem;
+    min-width: 18px;
+  }
+
+  .contact-text {
+    font-size: 0.85rem;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+
+
+  
+  .profile-header {
+    gap: 14px;
+  }
+  
+  .avatar {
+    width: 60px;
+    height: 60px;
+  }
+  
+    .profile-info h2 {
+      font-size: 1.15rem;
+    }
+  
+    .profile-info {
+      padding-right: 0;
+    }
+  
+    .shortlist-dev-btn {
+      position: static;
+      margin-top: 12px;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      width: 100%;
+      text-align: center;
+    }
+  
+  .repo-card {
+    padding: 14px;
+  }
+  
+  .recent-list {
+    gap: 6px;
+  }
+  
+  .recent-item {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .star-btn {
+    font-size: 1.8rem;
+    padding: 6px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .skill-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+  
+  .clear-all-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .popular-profiles-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .popular-profile-card {
+    padding: 10px 12px;
+  }
+  
+    .review-modal {
+      padding: 16px;
+      width: 95%;
+    }
+  
+    .review-field select {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+  
+    .review-field textarea {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+  
+  .profile-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .stat-value {
+    font-size: 1rem;
+  }
+  
+  .profile-details,
+  .account-info {
+    padding: 12px;
+  }
+  
+  .skills-section {
+    padding: 12px;
+  }
+  
+  .skill-tag {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+
+
 
   .user-profile {
     padding: 16px;
@@ -1065,7 +1220,8 @@
     font-size: 0.8rem;
     padding: 4px 10px;
   }
-}
+
+
 
 @media (max-width: 360px) {
   .developers-container {
@@ -1076,17 +1232,63 @@
     padding: 12px;
   }
 
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+
   .avatar {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
   }
 
   .profile-info h2 {
     font-size: 1rem;
   }
 
+  .contact-info {
+    padding: 6px;
+    gap: 4px;
+  }
+
+  .contact-item {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+
+  .contact-icon {
+    font-size: 0.9rem;
+    min-width: 16px;
+  }
+
+  .contact-text {
+    font-size: 0.8rem;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .stat-value {
+    font-size: 0.9rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
   .repo-card {
     padding: 12px;
+  }
+
+  .shortlist-dev-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
   }
 }
 
@@ -1243,3 +1445,4 @@
     gap: 6px;
   }
 }
+
