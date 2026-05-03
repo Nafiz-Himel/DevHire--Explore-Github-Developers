@@ -97,12 +97,88 @@ function Developers({ onSignOut, onNavigate }) {
   });
   const [showReview, setShowReview] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
+  const [isCustomRole, setIsCustomRole] = useState(false);
+  const [customRole, setCustomRole] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [rating, setRating] = useState(0);
   const [showRepoLabel, setShowRepoLabel] = useState(null);
   const [repoLabelText, setRepoLabelText] = useState("");
+  const [shortlistRepoModal, setShortlistRepoModal] = useState(null);
   const [popularDevs, setPopularDevs] = useState([]);
+
+  // Extract all social links from profile
+  const socialLinks = useMemo(() => {
+    const links = {
+      linkedin: null,
+      twitter: userData?.twitter_username ? `https://twitter.com/${userData.twitter_username}` : null,
+      facebook: null,
+      instagram: null,
+      website: null,
+      github: null,
+    };
+
+    // Helper to extract URL by platform hostname from text
+    const extractUrl = (text, hostname) => {
+      if (!text) return null;
+      // Escape dots in hostname for regex
+      const escapedHostname = hostname.replace(/\./g, '\\.');
+      const regex = new RegExp(`https?:\/\/[^\s]*${escapedHostname}[^\s]*`, 'gi');
+      const match = text.match(regex);
+      if (!match) return null;
+      // Clean trailing punctuation from URL
+      return match[0].replace(/[.,;!)]+$/, '');
+    };
+
+    // Check blog field
+    if (userData?.blog) {
+      const blogClean = userData.blog.startsWith('http')
+        ? userData.blog
+        : 'https://' + userData.blog;
+
+      if (blogClean.includes('linkedin.com/in/') || blogClean.includes('linkedin.com/pub/')) {
+        links.linkedin = blogClean;
+      } else if (blogClean.includes('facebook.com/')) {
+        links.facebook = blogClean;
+      } else if (blogClean.includes('instagram.com/')) {
+        links.instagram = blogClean;
+      } else {
+        links.website = blogClean;
+      }
+    }
+
+    // Extract from bio field (check all common patterns)
+    if (userData?.bio) {
+      const bio = userData.bio;
+
+      // LinkedIn (if not already set)
+      if (!links.linkedin) {
+        links.linkedin = extractUrl(bio, 'linkedin.com') || extractUrl(bio, 'lnkd.in');
+      }
+
+      // Twitter/X (if not already set)
+      if (!links.twitter) {
+        links.twitter = extractUrl(bio, 'twitter.com') || extractUrl(bio, 'x.com');
+      }
+
+      // Facebook
+      if (!links.facebook) {
+        links.facebook = extractUrl(bio, 'facebook.com');
+      }
+
+      // Instagram
+      if (!links.instagram) {
+        links.instagram = extractUrl(bio, 'instagram.com');
+      }
+
+      // GitHub
+      if (!links.github) {
+        links.github = extractUrl(bio, 'github.com');
+      }
+    }
+
+    return links;
+  }, [userData]);
 
   useEffect(() => {
     localStorage.setItem("devShortlist", JSON.stringify(shortlistedDevs));
@@ -330,6 +406,8 @@ function Developers({ onSignOut, onNavigate }) {
     } else {
       setShowReview(dev.login);
       setSelectedRole("");
+      setIsCustomRole(false);
+      setCustomRole("");
       setReviewMessage("");
       setSelectedSkills([]);
       setRating(0);
@@ -339,7 +417,7 @@ function Developers({ onSignOut, onNavigate }) {
   const confirmShortlistDev = (dev) => {
     const devWithReview = {
       ...dev,
-      role: selectedRole,
+      role: isCustomRole ? customRole : selectedRole,
       message: reviewMessage,
       skills: selectedSkills,
       rating: rating,
@@ -347,6 +425,8 @@ function Developers({ onSignOut, onNavigate }) {
     setShortlistedDevs((prev) => [...prev, devWithReview]);
     setShowReview(null);
     setSelectedRole("");
+    setIsCustomRole(false);
+    setCustomRole("");
     setReviewMessage("");
     setSelectedSkills([]);
     setRating(0);
@@ -355,22 +435,30 @@ function Developers({ onSignOut, onNavigate }) {
   const handleShortlistRepo = (repo) => {
     const isShortlisted = shortlistedRepos.some((r) => r.id === repo.id);
     if (isShortlisted) {
-      setShortlistedRepos((prev) => prev.filter((r) => r.id !== repo.id));
+      setShortlistRepoModal({ repo, action: 'remove' });
     } else {
-      setShowRepoLabel(repo.id);
+      setShortlistRepoModal({ repo, action: 'shortlist' });
       setRepoLabelText("");
     }
   };
 
-  const confirmRepoLabel = (repo) => {
-    const repoWithLabel = {
-      ...repo,
-      label: repoLabelText,
-      ownerLogin: repo.owner.login,
-      ownerAvatar: repo.owner.avatar_url,
-    };
-    setShortlistedRepos((prev) => [...prev, repoWithLabel]);
-    setShowRepoLabel(null);
+  const confirmRepoShortlist = () => {
+    if (!shortlistRepoModal) return;
+    const { repo, action } = shortlistRepoModal;
+
+    if (action === 'remove') {
+      setShortlistedRepos((prev) => prev.filter((r) => r.id !== repo.id));
+    } else {
+      const repoWithLabel = {
+        ...repo,
+        label: repoLabelText,
+        ownerLogin: repo.owner.login,
+        ownerAvatar: repo.owner.avatar_url,
+      };
+      setShortlistedRepos((prev) => [...prev, repoWithLabel]);
+    }
+
+    setShortlistRepoModal(null);
     setRepoLabelText("");
   };
 
@@ -519,45 +607,67 @@ function Developers({ onSignOut, onNavigate }) {
                   alt={userData.login}
                   className="avatar"
                 />
-                <div className="profile-info">
-                  <h2>{userData.name || userData.login}</h2>
-                  <p>@{userData.login}</p>
-                  {userData.bio && <p className="bio">{userData.bio}</p>}
-                  <h4 className="contact-info-title">Contact Info</h4>
+                 <div className="profile-info">
+                   <h2>{userData.name || userData.login}</h2>
+                   <p>@{userData.login}</p>
+                   {userData.bio && <p className="bio">{userData.bio}</p>}
+
+                   <button
+                     className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
+                     onClick={() => handleShortlistDev(userData)}
+                   >
+                     {shortlistedDevs.some((d) => d.login === userData.login)
+                       ? "Remove from Shortlist"
+                       : "Shortlist Developer"}
+                   </button>
+
+                   <h4 className="contact-info-title">Contact Info</h4>
                   <div className="contact-info">
-                    {userData.blog && (
-                      <a
-                        href={
-                          userData.blog.startsWith("http")
-                            ? userData.blog
-                            : `https://${userData.blog}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="contact-item"
-                        title={userData.blog}
-                      >
-                        <span role="img" aria-label="website">🌐</span> <span className="contact-text">{userData.blog}</span>
+                    {socialLinks.website && (
+                      <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <span role="img" aria-label="website">🌐</span> <span className="contact-text">{socialLinks.website}</span>
                       </a>
                     )}
+
                     {userData.email && (
-                      <a
-                        href={`mailto:${userData.email}`}
-                        className="contact-item"
-                        title={userData.email}
-                      >
+                      <a href={`mailto:${userData.email}`} className="contact-item" title={userData.email}>
                         <span role="img" aria-label="email">📧</span> <span className="contact-text">{userData.email}</span>
                       </a>
                     )}
-                    {linkedInUrl && (
-                      <a
-                        href={linkedInUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="contact-item"
-                      >
-                        <span role="img" aria-label="linkedin">💼</span> <span className="contact-text">LinkedIn</span>
+
+                    {socialLinks.linkedin && (
+                      <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <span role="img" aria-label="linkedin">💼</span> <span className="contact-text">{socialLinks.linkedin}</span>
                       </a>
+                    )}
+
+                    {socialLinks.twitter && (
+                      <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <span role="img" aria-label="twitter">🐦</span> <span className="contact-text">{socialLinks.twitter}</span>
+                      </a>
+                    )}
+
+                    {socialLinks.facebook && (
+                      <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <span role="img" aria-label="facebook">📘</span> <span className="contact-text">{socialLinks.facebook}</span>
+                      </a>
+                    )}
+
+                    {socialLinks.instagram && (
+                      <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <span role="img" aria-label="instagram">📷</span> <span className="contact-text">{socialLinks.instagram}</span>
+                      </a>
+                    )}
+
+                    {socialLinks.github && (
+                      <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <span role="img" aria-label="github">🐧</span> <span className="contact-text">{socialLinks.github}</span>
+                      </a>
+                    )}
+
+                    {!socialLinks.website && !userData.email && !socialLinks.linkedin &&
+                     !socialLinks.twitter && !socialLinks.facebook && !socialLinks.instagram && !socialLinks.github && (
+                      <p className="no-contact-info">No public contact information available.</p>
                     )}
                   </div>
 
@@ -650,99 +760,127 @@ function Developers({ onSignOut, onNavigate }) {
                     </div>
                   </div>
 
-                  <button
-                    className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
-                    onClick={() => handleShortlistDev(userData)}
-                  >
-                    {shortlistedDevs.some((d) => d.login === userData.login)
-                      ? "Remove from Shortlist"
-                      : "Shortlist Developer"}
-                  </button>
+                  )}
 
                   {showReview === userData.login && (
-                    <div className="review-section">
-                      <h3>Review Developer</h3>
-                      <div className="review-field">
-                        <label>Role:</label>
-                        <select
-                          value={selectedRole}
-                          onChange={(e) => {
-                            setSelectedRole(e.target.value);
-                            setSelectedSkills([]);
-                          }}
-                        >
-                          <option value="">Select a role</option>
-                          {roleOptions.map((role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {selectedRole && skillsByRole[selectedRole] && (
-                        <div className="review-field">
-                          <label>Skills:</label>
-                          <div className="skills-container">
-                            {skillsByRole[selectedRole].map((skill) => (
-                              <button
-                                key={skill}
-                                className={`skill-btn ${selectedSkills.includes(skill) ? "selected" : ""}`}
-                                onClick={() => {
-                                  setSelectedSkills((prev) =>
-                                    prev.includes(skill)
-                                      ? prev.filter((s) => s !== skill)
-                                      : [...prev, skill],
-                                  );
+                    <div className="review-modal-overlay" onClick={() => setShowReview(null)}>
+                      <div className="review-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="review-modal-header">
+                          <h3>Review {userData.name || userData.login}</h3>
+                          <button className="review-modal-close" onClick={() => setShowReview(null)}>✕</button>
+                        </div>
+                        <div className="review-modal-body">
+                          <div className="review-field">
+                            <label>Role:</label>
+                            {isCustomRole ? (
+                              <input
+                                type="text"
+                                value={customRole}
+                                onChange={(e) => setCustomRole(e.target.value)}
+                                placeholder="Enter custom role..."
+                                className="role-input"
+                                autoFocus
+                              />
+                            ) : (
+                              <select
+                                value={selectedRole}
+                                onChange={(e) => {
+                                  if (e.target.value === "custom") {
+                                    setIsCustomRole(true);
+                                    setSelectedRole("");
+                                  } else {
+                                    setSelectedRole(e.target.value);
+                                    setSelectedSkills([]);
+                                  }
                                 }}
                               >
-                                {skill}
+                                <option value="">Select a role</option>
+                                {roleOptions.map((role) => (
+                                  <option key={role} value={role}>
+                                    {role}
+                                  </option>
+                                ))}
+                                <option value="custom">+ Type custom role...</option>
+                              </select>
+                            )}
+                            {isCustomRole && (
+                              <button
+                                className="back-to-select"
+                                onClick={() => {
+                                  setIsCustomRole(false);
+                                  setCustomRole("");
+                                }}
+                              >
+                                ← Back to list
                               </button>
-                            ))}
+                            )}
+                          </div>
+
+                          {selectedRole && skillsByRole[selectedRole] && (
+                            <div className="review-field">
+                              <label>Skills:</label>
+                              <div className="skills-container">
+                                {skillsByRole[selectedRole].map((skill) => (
+                                  <button
+                                    key={skill}
+                                    className={`skill-btn ${selectedSkills.includes(skill) ? "selected" : ""}`}
+                                    onClick={() => {
+                                      setSelectedSkills((prev) =>
+                                        prev.includes(skill)
+                                          ? prev.filter((s) => s !== skill)
+                                          : [...prev, skill],
+                                      );
+                                    }}
+                                  >
+                                    {skill}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="review-field">
+                            <label>Rating:</label>
+                            <div className="rating-container">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  className={`star-btn ${star <= rating ? "active" : ""}`}
+                                  onClick={() => setRating(star)}
+                                >
+                                  ★
+                                </button>
+                              ))}
+                              {rating > 0 && (
+                                <span className="rating-text">{rating}/5</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="review-field">
+                            <label>Message:</label>
+                            <textarea
+                              value={reviewMessage}
+                              onChange={(e) => setReviewMessage(e.target.value)}
+                              placeholder="Add a message about this developer..."
+                              rows={3}
+                            />
                           </div>
                         </div>
-                      )}
-
-                      <div className="review-field">
-                        <label>Rating:</label>
-                        <div className="rating-container">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              className={`star-btn ${star <= rating ? "active" : ""}`}
-                              onClick={() => setRating(star)}
-                            >
-                              ★
-                            </button>
-                          ))}
-                          {rating > 0 && (
-                            <span className="rating-text">{rating}/5</span>
-                          )}
+                        <div className="review-actions">
+                          <button
+                            className="confirm-btn"
+                            onClick={() => confirmShortlistDev(userData)}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => setShowReview(null)}
+                          >
+                            Cancel
+                          </button>
                         </div>
-                      </div>
-
-                      <div className="review-field">
-                        <label>Message:</label>
-                        <textarea
-                          value={reviewMessage}
-                          onChange={(e) => setReviewMessage(e.target.value)}
-                          placeholder="Add a message about this developer..."
-                          rows={3}
-                        />
-                      </div>
-                      <div className="review-actions">
-                        <button
-                          className="confirm-btn"
-                          onClick={() => confirmShortlistDev(userData)}
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          className="cancel-btn"
-                          onClick={() => setShowReview(null)}
-                        >
-                          Cancel
-                        </button>
                       </div>
                     </div>
                   )}
@@ -791,41 +929,67 @@ function Developers({ onSignOut, onNavigate }) {
                           ? "Remove"
                           : "Shortlist Repo"}
                       </button>
-
-                      {showRepoLabel === repo.id && (
-                        <div className="repo-label-section">
-                          <input
-                            type="text"
-                            placeholder="Enter label (e.g., React Project, Portfolio)"
-                            value={repoLabelText}
-                            onChange={(e) => setRepoLabelText(e.target.value)}
-                            className="repo-label-input"
-                          />
-                          <div className="repo-label-actions">
-                            <button
-                              className="confirm-btn"
-                              onClick={() => confirmRepoLabel(repo)}
-                            >
-                              Confirm
-                            </button>
-                            <button
-                              className="cancel-btn"
-                              onClick={() => setShowRepoLabel(null)}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ))}
-                </div>
               </div>
             </div>
           )}
-
         </div>
       </div>
+
+      {shortlistRepoModal && (
+        <div className="review-modal-overlay" onClick={() => setShortlistRepoModal(null)}>
+          <div className="review-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="review-modal-header">
+              <h3>
+                {shortlistRepoModal.action === 'remove'
+                  ? 'Remove Repository'
+                  : 'Shortlist Repository'}
+              </h3>
+              <button className="review-modal-close" onClick={() => setShortlistRepoModal(null)}>✕</button>
+            </div>
+            <div className="review-modal-body">
+              <div className="review-field">
+                <label>Repository:</label>
+                <span>{shortlistRepoModal.repo.name}</span>
+              </div>
+
+              {shortlistRepoModal.action === 'shortlist' && (
+                <div className="review-field">
+                  <label>Label (optional):</label>
+                  <input
+                    type="text"
+                    placeholder="Enter label..."
+                    value={repoLabelText}
+                    onChange={(e) => setRepoLabelText(e.target.value)}
+                    className="role-input"
+                  />
+                </div>
+              )}
+
+              {shortlistRepoModal.action === 'remove' && (
+                <p style={{color: '#dc2626', fontSize: '0.9rem'}}>
+                  Are you sure you want to remove this repository from shortlist?
+                </p>
+              )}
+            </div>
+            <div className="review-actions">
+              <button
+                className="confirm-btn"
+                onClick={confirmRepoShortlist}
+              >
+                {shortlistRepoModal.action === 'remove' ? 'Confirm Remove' : 'Shortlist'}
+              </button>
+              <button
+                className="cancel-btn"
+                onClick={() => setShortlistRepoModal(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sidebar>
   );
 }
