@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import Sidebar from './Sidebar';
 import './Dashboard.css';
 
 function Dashboard({ onSignOut, onNavigate }) {
-  const [collapsed, setCollapsed] = useState(false);
   const [stats, setStats] = useState({
     searched: 0,
     shortlisted: 0,
@@ -38,40 +38,7 @@ function Dashboard({ onSignOut, onNavigate }) {
   const COLORS = ['#4db6ac', '#26a69a', '#00796b'];
 
   return (
-    <div className={`dashboard-shell ${collapsed ? 'collapsed' : ''}`}>
-      <div className={`side ${collapsed ? 'collapsed' : ''}`}>
-        <div className="side-logo">
-          <div className="logo-mark">DH</div>
-          <div className="logo-copy">DevHire</div>
-        </div>
-
-        <div className="side-nav">
-          <button type="button" className="nav-link active" onClick={() => onNavigate('dashboard')}>
-            <span className="nav-icon">🏠</span>
-            {!collapsed && <span className="nav-label">Dashboard</span>}
-          </button>
-          <button type="button" className="nav-link" onClick={() => onNavigate('developers')}>
-            <span className="nav-icon">💻</span>
-            {!collapsed && <span className="nav-label">Developers</span>}
-          </button>
-          <button type="button" className="nav-link" onClick={() => onNavigate('shortlist')}>
-            <span className="nav-icon">⭐</span>
-            {!collapsed && <span className="nav-label">Shortlist</span>}
-          </button>
-        </div>
-
-        <div className="side-footer">
-          <button type="button" className="footer-button" onClick={() => setCollapsed((v) => !v)}>
-            <span className="nav-icon">↔</span>
-            {!collapsed && <span className="footer-label">Collapse</span>}
-          </button>
-          <button type="button" className="footer-button logout" onClick={onSignOut}>
-            <span className="nav-icon">🔓</span>
-            {!collapsed && <span className="footer-label">Logout</span>}
-          </button>
-        </div>
-      </div>
-
+    <Sidebar currentPage="dashboard" onNavigate={onNavigate} onSignOut={onSignOut}>
       <div className="dashboard">
         <div className="dashboard-nav">
           <div className="dashboard-title">Dashboard</div>
@@ -151,7 +118,7 @@ function Dashboard({ onSignOut, onNavigate }) {
           </div>
         </div>
       </div>
-    </div>
+    </Sidebar>
   );
 }
 

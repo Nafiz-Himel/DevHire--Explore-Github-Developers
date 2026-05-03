@@ -393,6 +393,30 @@
   color: #64748b;
 }
 
+.skills-tags-container {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.skill-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.dev-rating {
+  font-size: 0.8rem;
+  color: #f59e0b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 @media (max-width: 768px) {
   .shortlist-grid,
   .shortlisted-repos-list {

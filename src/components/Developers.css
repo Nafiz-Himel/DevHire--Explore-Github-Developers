@@ -417,6 +417,7 @@
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -616,6 +617,68 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.skills-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skill-btn {
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.skill-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.skill-btn.selected {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.star-btn:hover {
+  color: #fbbf24;
+}
+
+.star-btn.active {
+  color: #fbbf24;
+}
+
+.rating-text {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {

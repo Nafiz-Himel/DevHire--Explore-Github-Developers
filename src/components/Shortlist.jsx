@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import Sidebar from './Sidebar'
 import './Dashboard.css'
 import './Shortlist.css'
 
 function Shortlist({ onSignOut, onNavigate }) {
-  const [collapsed, setCollapsed] = useState(false)
   const [shortlistedDevs, setShortlistedDevs] = useState([])
   const [shortlistedRepos, setShortlistedRepos] = useState([])
   const [activeTab, setActiveTab] = useState('developers')
@@ -41,40 +41,7 @@ function Shortlist({ onSignOut, onNavigate }) {
   }
 
   return (
-    <div className={`dashboard-shell ${collapsed ? 'collapsed' : ''}`}>
-      <div className={`side ${collapsed ? 'collapsed' : ''}`}>
-        <div className="side-logo">
-          <div className="logo-mark">DH</div>
-          <div className="logo-copy">DevHire</div>
-        </div>
-
-        <div className="side-nav">
-          <button type="button" className="nav-link" onClick={() => onNavigate('dashboard')}>
-            <span className="nav-icon">🏠</span>
-            <span className="nav-label">Dashboard</span>
-          </button>
-          <button type="button" className="nav-link" onClick={() => onNavigate('developers')}>
-            <span className="nav-icon">💻</span>
-            <span className="nav-label">Developers</span>
-          </button>
-          <button type="button" className="nav-link active">
-            <span className="nav-icon">⭐</span>
-            <span className="nav-label">Shortlist</span>
-          </button>
-        </div>
-
-        <div className="side-footer">
-          <button type="button" className="footer-button" onClick={() => setCollapsed((value) => !value)}>
-            <span className="nav-icon">↔</span>
-            <span className="footer-label">Collapse</span>
-          </button>
-          <button type="button" className="footer-button logout" onClick={onSignOut}>
-            <span className="nav-icon">🔓</span>
-            <span className="footer-label">Logout</span>
-          </button>
-        </div>
-      </div>
-
+    <Sidebar currentPage="shortlist" onNavigate={onNavigate} onSignOut={onSignOut}>
       <div className="dashboard">
         <div className="dashboard-nav">
           <div className="dashboard-title">Shortlist</div>
@@ -153,12 +120,15 @@ function Shortlist({ onSignOut, onNavigate }) {
                         </a>
                         {dev.role && <span className="role-tag">{dev.role}</span>}
                         {dev.message && <p className="dev-message">{dev.message}</p>}
-                        {dev.frontendFeatures && dev.frontendFeatures.length > 0 && (
-                          <div className="feature-tags-container">
-                            {dev.frontendFeatures.map(skill => (
-                              <span key={skill} className="feature-tag">{skill}</span>
+                        {dev.skills && dev.skills.length > 0 && (
+                          <div className="skills-tags-container">
+                            {dev.skills.map(skill => (
+                              <span key={skill} className="skill-tag">{skill}</span>
                             ))}
                           </div>
+                        )}
+                        {dev.rating && (
+                          <div className="dev-rating">★ {dev.rating}/5</div>
                         )}
 
                         <button
@@ -265,7 +235,7 @@ function Shortlist({ onSignOut, onNavigate }) {
           </div>
         </div>
       </div>
-    </div>
+    </Sidebar>
   )
 }
 
