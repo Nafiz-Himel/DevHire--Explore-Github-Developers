@@ -174,37 +174,49 @@ function Shortlist({ onSignOut, onNavigate }) {
                     })
                     .map((repo) => (
                     <div key={repo.id} className="shortlisted-repo-card">
-                      <div className="shortlisted-repo-owner">
-                        <img src={repo.ownerAvatar} alt={repo.ownerLogin} className="repo-owner-avatar" />
-                        <span className="repo-owner-name">{repo.ownerLogin}</span>
-                      </div>
-                      <div className="shortlisted-repo-info">
-                        <div className="repo-name-wrapper">
-                          <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="shortlisted-repo-name">
-                            {repo.name}
-                          </a>
-                          {repo.label && <span className="repo-label-tag">{repo.label}</span>}
-                        </div>
-                        {repo.description && <p className="shortlisted-repo-desc">{repo.description}</p>}
-                        <div className="repo-meta">
-                          {repo.language && (
-                            <span className="repo-lang">
-                              <span className="lang-dot" />
-                              {repo.language}
-                            </span>
-                          )}
-                          <span className="repo-stat">⭐ {repo.stargazers_count}</span>
-                          <span className="repo-stat">🍴 {repo.forks_count}</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="remove-btn"
-                        onClick={() => handleRemoveRepo(repo.id)}
-                      >
-                        Remove
-                      </button>
-                    </div>
+                       <div className="shortlisted-repo-owner">
+                         <img src={repo.ownerAvatar} alt={repo.ownerLogin} className="repo-owner-avatar" />
+                         <span className="repo-owner-name">{repo.ownerLogin}</span>
+                       </div>
+                       <div className="shortlisted-repo-info">
+                         <div className="repo-name-wrapper">
+                           <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="shortlisted-repo-name">
+                             {repo.name}
+                           </a>
+                           {repo.label && <span className="repo-label-tag">{repo.label}</span>}
+                         </div>
+                         {repo.description && <p className="shortlisted-repo-desc">{repo.description}</p>}
+                         <div className="repo-meta">
+                           {repo.language && (
+                             <span className="repo-lang">
+                               <span className="lang-dot" />
+                               {repo.language}
+                             </span>
+                           )}
+                           <span className="repo-stat">⭐ {repo.stargazers_count}</span>
+                           <span className="repo-stat">🍴 {repo.forks_count}</span>
+                         </div>
+                       </div>
+                       <div className="card-actions">
+                         <button
+                           onClick={() => {
+                             const owner = JSON.parse(localStorage.getItem('devShortlist') || '[]')
+                               .find(dev => dev.login === repo.ownerLogin)
+                             if (owner) openContactModal(owner)
+                           }}
+                           className="contact-toggle"
+                         >
+                           Contact
+                         </button>
+                         <button
+                           type="button"
+                           className="remove-btn"
+                           onClick={() => handleRemoveRepo(repo.id)}
+                         >
+                           Remove
+                         </button>
+                       </div>
+                     </div>
                   ))}
                 </div>
               ) : (

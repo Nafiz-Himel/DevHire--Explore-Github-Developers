@@ -354,7 +354,7 @@
   border-radius: 16px;
   padding: 18px 20px;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 16px;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
@@ -362,10 +362,6 @@
 .shortlisted-repo-card:hover {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   border-color: #cbd5e1;
-}
-
-.shortlisted-repo-card .remove-btn {
-  margin-top: auto;
 }
 
 .shortlisted-repo-owner {
