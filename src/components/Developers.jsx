@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import Sidebar from "./Sidebar";
 import "./Dashboard.css";
 import "./Developers.css";
+import { FaLinkedin, FaTwitter, FaFacebook, FaInstagram, FaGithub, FaGlobe, FaEnvelope } from "react-icons/fa";
 
 const roleOptions = [
   "Frontend Developer",
@@ -75,6 +76,7 @@ function Developers({ onSignOut, onNavigate }) {
   const [username, setUsername] = useState("");
   const [userData, setUserData] = useState(null);
   const [repos, setRepos] = useState([]);
+  const [socialAccounts, setSocialAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rateLimitRemaining, setRateLimitRemaining] = useState(null);
@@ -107,78 +109,41 @@ function Developers({ onSignOut, onNavigate }) {
   const [shortlistRepoModal, setShortlistRepoModal] = useState(null);
   const [popularDevs, setPopularDevs] = useState([]);
 
-  // Extract all social links from profile
+  // Extract social links: website from blog, social accounts from GitHub API
   const socialLinks = useMemo(() => {
     const links = {
       linkedin: null,
-      twitter: userData?.twitter_username ? `https://twitter.com/${userData.twitter_username}` : null,
+      twitter: null,
       facebook: null,
       instagram: null,
-      website: null,
       github: null,
+      website: null,
     };
 
-    // Helper to extract URL by platform hostname from text
-    const extractUrl = (text, hostname) => {
-      if (!text) return null;
-      // Escape dots in hostname for regex
-      const escapedHostname = hostname.replace(/\./g, '\\.');
-      const regex = new RegExp(`https?:\/\/[^\s]*${escapedHostname}[^\s]*`, 'gi');
-      const match = text.match(regex);
-      if (!match) return null;
-      // Clean trailing punctuation from URL
-      return match[0].replace(/[.,;!)]+$/, '');
-    };
-
-    // Check blog field
+    // Add website from blog field
     if (userData?.blog) {
       const blogClean = userData.blog.startsWith('http')
         ? userData.blog
         : 'https://' + userData.blog;
-
-      if (blogClean.includes('linkedin.com/in/') || blogClean.includes('linkedin.com/pub/')) {
-        links.linkedin = blogClean;
-      } else if (blogClean.includes('facebook.com/')) {
-        links.facebook = blogClean;
-      } else if (blogClean.includes('instagram.com/')) {
-        links.instagram = blogClean;
-      } else {
-        links.website = blogClean;
-      }
+      links.website = blogClean;
     }
 
-    // Extract from bio field (check all common patterns)
-    if (userData?.bio) {
-      const bio = userData.bio;
-
-      // LinkedIn (if not already set)
-      if (!links.linkedin) {
-        links.linkedin = extractUrl(bio, 'linkedin.com') || extractUrl(bio, 'lnkd.in');
+    // Add social accounts from GitHub API
+    socialAccounts.forEach((acc) => {
+      const provider = acc.provider.toLowerCase();
+      if (['linkedin', 'twitter', 'x', 'facebook', 'instagram', 'github'].includes(provider)) {
+        const key = provider === 'x' ? 'twitter' : provider;
+        links[key] = acc.url;
       }
+    });
 
-      // Twitter/X (if not already set)
-      if (!links.twitter) {
-        links.twitter = extractUrl(bio, 'twitter.com') || extractUrl(bio, 'x.com');
-      }
-
-      // Facebook
-      if (!links.facebook) {
-        links.facebook = extractUrl(bio, 'facebook.com');
-      }
-
-      // Instagram
-      if (!links.instagram) {
-        links.instagram = extractUrl(bio, 'instagram.com');
-      }
-
-      // GitHub
-      if (!links.github) {
-        links.github = extractUrl(bio, 'github.com');
-      }
+    // Fallback: use twitter_username if API didn't provide it
+    if (!links.twitter && userData?.twitter_username) {
+      links.twitter = `https://twitter.com/${userData.twitter_username}`;
     }
 
     return links;
-  }, [userData]);
+  }, [socialAccounts, userData]);
 
   useEffect(() => {
     localStorage.setItem("devShortlist", JSON.stringify(shortlistedDevs));
@@ -330,14 +295,17 @@ function Developers({ onSignOut, onNavigate }) {
 
     setLoading(true);
     setError("");
+    setSocialAccounts([]);
 
     // Check cache first
     const cachedUser = getCachedData(`user_${term}`);
     const cachedRepos = getCachedData(`repos_${term}`);
+    const cachedSocial = getCachedData(`social_${term}`);
 
-    if (cachedUser && cachedRepos) {
+    if (cachedUser && cachedRepos && cachedSocial) {
       setUserData(cachedUser);
       setRepos(cachedRepos);
+      setSocialAccounts(cachedSocial);
       setLoading(false);
       if (!recentSearches.includes(term)) {
         setRecentSearches((prev) => [term, ...prev].slice(0, 10));
@@ -371,6 +339,19 @@ function Developers({ onSignOut, onNavigate }) {
       updateRateLimit(reposRes);
       const reposData = await reposRes.json();
       setCachedData(`repos_${term}`, reposData);
+
+      // Fetch social accounts from GitHub API
+      const socialRes = await fetch(
+        `https://api.github.com/users/${term}/social_accounts`,
+        { headers }
+      );
+      updateRateLimit(socialRes);
+      let socialData = [];
+      if (socialRes.ok) {
+        socialData = await socialRes.json();
+        setCachedData(`social_${term}`, socialData);
+      }
+      setSocialAccounts(socialData);
 
       let finalUserData = { ...userData };
       if (!userData.email && reposData.length > 0) {
@@ -618,43 +599,43 @@ function Developers({ onSignOut, onNavigate }) {
                   <div className="contact-info">
                     {socialLinks.website && (
                       <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <span role="img" aria-label="website">🌐</span> <span className="contact-text">{socialLinks.website}</span>
+                        <FaGlobe className="contact-icon" /> <span className="contact-text">{socialLinks.website}</span>
                       </a>
                     )}
 
                     {userData.email && (
                       <a href={`mailto:${userData.email}`} className="contact-item" title={userData.email}>
-                        <span role="img" aria-label="email">📧</span> <span className="contact-text">{userData.email}</span>
+                        <FaEnvelope className="contact-icon" /> <span className="contact-text">{userData.email}</span>
                       </a>
                     )}
 
                     {socialLinks.linkedin && (
                       <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <span role="img" aria-label="linkedin">📎</span> <span className="contact-text">{socialLinks.linkedin}</span>
+                        <FaLinkedin className="contact-icon" /> <span className="contact-text">{socialLinks.linkedin}</span>
                       </a>
                     )}
 
                     {socialLinks.twitter && (
                       <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <span role="img" aria-label="twitter">🐦</span> <span className="contact-text">{socialLinks.twitter}</span>
+                        <FaTwitter className="contact-icon" /> <span className="contact-text">{socialLinks.twitter}</span>
                       </a>
                     )}
 
                     {socialLinks.facebook && (
                       <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <span role="img" aria-label="facebook">📘</span> <span className="contact-text">{socialLinks.facebook}</span>
+                        <FaFacebook className="contact-icon" /> <span className="contact-text">{socialLinks.facebook}</span>
                       </a>
                     )}
 
                     {socialLinks.instagram && (
                       <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <span role="img" aria-label="instagram">📷</span> <span className="contact-text">{socialLinks.instagram}</span>
+                        <FaInstagram className="contact-icon" /> <span className="contact-text">{socialLinks.instagram}</span>
                       </a>
                     )}
 
                     {socialLinks.github && (
                       <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <span role="img" aria-label="github">🐧</span> <span className="contact-text">{socialLinks.github}</span>
+                        <FaGithub className="contact-icon" /> <span className="contact-text">{socialLinks.github}</span>
                       </a>
                     )}
 

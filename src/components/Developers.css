@@ -275,13 +275,6 @@
 }
 
 .contact-item {
-  font-size: 0.9rem;
-  color: #475569;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.contact-item a {
   color: #2563eb;
   text-decoration: none;
   display: flex;
@@ -289,10 +282,15 @@
   gap: 6px;
   min-width: 0;
   overflow: hidden;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  font-size: 0.9rem;
 }
 
-.contact-item a:hover {
-  text-decoration: underline;
+.contact-item:hover {
+  text-decoration: none;
+  background-color: #f1f5f9;
 }
 
 .contact-text {
@@ -300,6 +298,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  color: #475569;
+}
+
+.contact-icon {
+  font-size: 1.1rem;
+  min-width: 20px;
+  color: #475569;
+  display: flex;
+  align-items: center;
 }
 
 /* Profile Stats */
