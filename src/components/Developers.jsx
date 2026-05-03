@@ -104,12 +104,10 @@ function Developers({ onSignOut, onNavigate }) {
   const [reviewMessage, setReviewMessage] = useState("");
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [rating, setRating] = useState(0);
-  const [showRepoLabel, setShowRepoLabel] = useState(null);
   const [repoLabelText, setRepoLabelText] = useState("");
   const [shortlistRepoModal, setShortlistRepoModal] = useState(null);
   const [popularDevs, setPopularDevs] = useState([]);
 
-  // Extract social links: website from blog, social accounts from GitHub API
   const socialLinks = useMemo(() => {
     const links = {
       linkedin: null,
@@ -120,24 +118,21 @@ function Developers({ onSignOut, onNavigate }) {
       website: null,
     };
 
-    // Add website from blog field
     if (userData?.blog) {
-      const blogClean = userData.blog.startsWith('http')
+      const blogClean = userData.blog.startsWith("http")
         ? userData.blog
-        : 'https://' + userData.blog;
+        : "https://" + userData.blog;
       links.website = blogClean;
     }
 
-    // Add social accounts from GitHub API
     socialAccounts.forEach((acc) => {
       const provider = acc.provider.toLowerCase();
-      if (['linkedin', 'twitter', 'x', 'facebook', 'instagram', 'github'].includes(provider)) {
-        const key = provider === 'x' ? 'twitter' : provider;
+      if (["linkedin", "twitter", "x", "facebook", "instagram", "github"].includes(provider)) {
+        const key = provider === "x" ? "twitter" : provider;
         links[key] = acc.url;
       }
     });
 
-    // Fallback: use twitter_username if API didn't provide it
     if (!links.twitter && userData?.twitter_username) {
       links.twitter = `https://twitter.com/${userData.twitter_username}`;
     }
@@ -157,7 +152,6 @@ function Developers({ onSignOut, onNavigate }) {
     localStorage.setItem("recentSearches", JSON.stringify(recentSearches));
   }, [recentSearches]);
 
-  // Cache utility functions
   const getCachedData = (key) => {
     const cached = localStorage.getItem(`github_cache_${key}`);
     if (!cached) return null;
@@ -181,7 +175,6 @@ function Developers({ onSignOut, onNavigate }) {
     );
   };
 
-  // Save token to localStorage
   const handleTokenSave = (token) => {
     setGithubToken(token);
     if (token) {
@@ -191,7 +184,6 @@ function Developers({ onSignOut, onNavigate }) {
     }
   };
 
-  // Get fetch headers with optional auth token
   const getFetchHeaders = useCallback(() => {
     const headers = {};
     if (githubToken) {
@@ -200,7 +192,6 @@ function Developers({ onSignOut, onNavigate }) {
     return headers;
   }, [githubToken]);
 
-  // Update rate limit info from response headers
   const updateRateLimit = (response) => {
     const remaining = response.headers.get("X-RateLimit-Remaining");
     const reset = response.headers.get("X-RateLimit-Reset");
@@ -208,7 +199,6 @@ function Developers({ onSignOut, onNavigate }) {
     if (reset !== null) setRateLimitReset(parseInt(reset) * 1000);
   };
 
-  // Format time until rate limit reset
   const getTimeUntilReset = () => {
     if (!rateLimitReset) return "";
     const diff = rateLimitReset - Date.now();
@@ -227,6 +217,7 @@ function Developers({ onSignOut, onNavigate }) {
       "sindresorhus",
       "addyosmani",
       "tj",
+      "paulirish",
       "mdo",
       "fat",
     ];
@@ -235,12 +226,11 @@ function Developers({ onSignOut, onNavigate }) {
         const headers = getFetchHeaders();
         const results = await Promise.all(
           popularUsernames.map((u) =>
-            fetch(`https://api.github.com/users/${u}`, { headers })
-              .then((r) => {
-                updateRateLimit(r);
-                return r.json();
-              })
-          ),
+            fetch(`https://api.github.com/users/${u}`, { headers }).then((r) => {
+              updateRateLimit(r);
+              return r.json();
+            })
+          )
         );
         setPopularDevs(results.filter((dev) => !dev.message));
       } catch (err) {
@@ -252,7 +242,7 @@ function Developers({ onSignOut, onNavigate }) {
 
   const fetchEmailFromCommits = async (username, repos) => {
     const reposToCheck = repos
-      .filter(r => !r.fork)
+      .filter((r) => !r.fork)
       .sort((a, b) => b.stargazers_count - a.stargazers_count)
       .slice(0, 3);
 
@@ -277,18 +267,6 @@ function Developers({ onSignOut, onNavigate }) {
     return null;
   };
 
-  const getDeveloperSkills = (repos) => {
-    const langCount = {};
-    repos.forEach(repo => {
-      if (repo.language) {
-        langCount[repo.language] = (langCount[repo.language] || 0) + 1;
-      }
-    });
-    return Object.entries(langCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-  };
-
   const performSearch = async (searchTerm) => {
     const term = searchTerm || username;
     if (!term?.trim()) return;
@@ -297,7 +275,6 @@ function Developers({ onSignOut, onNavigate }) {
     setError("");
     setSocialAccounts([]);
 
-    // Check cache first
     const cachedUser = getCachedData(`user_${term}`);
     const cachedRepos = getCachedData(`repos_${term}`);
     const cachedSocial = getCachedData(`social_${term}`);
@@ -329,8 +306,8 @@ function Developers({ onSignOut, onNavigate }) {
       }
       if (!userRes.ok) throw new Error("User not found");
 
-      const userData = await userRes.json();
-      setCachedData(`user_${term}`, userData);
+      const fetchedUserData = await userRes.json();
+      setCachedData(`user_${term}`, fetchedUserData);
 
       const reposRes = await fetch(
         `https://api.github.com/users/${term}/repos?per_page=100`,
@@ -340,7 +317,6 @@ function Developers({ onSignOut, onNavigate }) {
       const reposData = await reposRes.json();
       setCachedData(`repos_${term}`, reposData);
 
-      // Fetch social accounts from GitHub API
       const socialRes = await fetch(
         `https://api.github.com/users/${term}/social_accounts`,
         { headers }
@@ -353,8 +329,8 @@ function Developers({ onSignOut, onNavigate }) {
       }
       setSocialAccounts(socialData);
 
-      let finalUserData = { ...userData };
-      if (!userData.email && reposData.length > 0) {
+      let finalUserData = { ...fetchedUserData };
+      if (!fetchedUserData.email && reposData.length > 0) {
         const emailFromCommits = await fetchEmailFromCommits(term, reposData);
         if (emailFromCommits) {
           finalUserData.email = emailFromCommits;
@@ -415,9 +391,9 @@ function Developers({ onSignOut, onNavigate }) {
   const handleShortlistRepo = (repo) => {
     const isShortlisted = shortlistedRepos.some((r) => r.id === repo.id);
     if (isShortlisted) {
-      setShortlistRepoModal({ repo, action: 'remove' });
+      setShortlistRepoModal({ repo, action: "remove" });
     } else {
-      setShortlistRepoModal({ repo, action: 'shortlist' });
+      setShortlistRepoModal({ repo, action: "shortlist" });
       setRepoLabelText("");
     }
   };
@@ -426,7 +402,7 @@ function Developers({ onSignOut, onNavigate }) {
     if (!shortlistRepoModal) return;
     const { repo, action } = shortlistRepoModal;
 
-    if (action === 'remove') {
+    if (action === "remove") {
       setShortlistedRepos((prev) => prev.filter((r) => r.id !== repo.id));
     } else {
       const repoWithLabel = {
@@ -454,263 +430,200 @@ function Developers({ onSignOut, onNavigate }) {
     <Sidebar currentPage="developers" onNavigate={onNavigate} onSignOut={handleSignOut}>
       <div className="dashboard">
         {!userData && (
-        <div className="dashboard-nav">
-          <div className="dashboard-title">Developers</div>
-          <div className="dashboard-logo">DH</div>
-        </div>
+          <div className="dashboard-nav">
+            <div className="dashboard-title">Developers</div>
+            <div className="dashboard-logo">DH</div>
+          </div>
         )}
 
         <div className="dashboard-main">
           {!userData && (
-          <div className="dashboard-heading">
-            <h1>Developers</h1>
-            <p>Search and explore GitHub developers.</p>
-          </div>
+            <div className="dashboard-heading">
+              <h1>Developers</h1>
+              <p>Search and explore GitHub developers.</p>
+            </div>
           )}
 
-          <div className="search-section">
-            <form onSubmit={handleSearch} className="search-form">
-              <input
-                type="text"
-                placeholder="Enter GitHub username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="search-input"
+          {userData && (
+            <div className="user-strip">
+              <img
+                src={userData.avatar_url}
+                alt={userData.login}
+                className="user-strip-avatar"
               />
-              <button type="submit" className="search-btn" disabled={loading}>
-                {loading ? "Searching..." : "Search"}
+              <div className="user-strip-info">
+                <h3>{userData.name || userData.login}</h3>
+                <span>@{userData.login}</span>
+              </div>
+              <div className="user-strip-contact">
+                {socialLinks.website && (
+                  <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Website">
+                    <FaGlobe />
+                  </a>
+                )}
+                {userData.email && (
+                  <a href={`mailto:${userData.email}`} className="strip-icon" title={userData.email}>
+                    <FaEnvelope />
+                  </a>
+                )}
+                {socialLinks.linkedin && (
+                  <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="strip-icon" title="LinkedIn">
+                    <FaLinkedin />
+                  </a>
+                )}
+                {socialLinks.twitter && (
+                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Twitter">
+                    <FaTwitter />
+                  </a>
+                )}
+                {socialLinks.facebook && (
+                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Facebook">
+                    <FaFacebook />
+                  </a>
+                )}
+                {socialLinks.instagram && (
+                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Instagram">
+                    <FaInstagram />
+                  </a>
+                )}
+                {socialLinks.github && (
+                  <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="strip-icon" title="GitHub">
+                    <FaGithub />
+                  </a>
+                )}
+              </div>
+              <button
+                className="back-to-search-btn"
+                onClick={() => {
+                  setUserData(null);
+                  setRepos([]);
+                  setSocialAccounts([]);
+                }}
+              >
+                ← Back to Search
               </button>
-            </form>
+            </div>
+          )}
 
-            {rateLimitRemaining !== null && (
-              <div className="rate-limit-info">
-                <span className="rate-limit-text">
-                  {githubToken ? "Authenticated" : "Public"} API: {rateLimitRemaining} requests remaining
-                  {rateLimitReset && rateLimitRemaining < 10 && (
-                    <span className="rate-limit-reset"> (resets in {getTimeUntilReset()})</span>
-                  )}
-                </span>
-                <button
-                  className="token-toggle-btn"
-                  onClick={() => setShowTokenInput(!showTokenInput)}
-                >
-                  {showTokenInput ? "Hide" : "Token"}
-                </button>
-              </div>
-            )}
-
-            {showTokenInput && (
-              <div className="token-input-section">
+          {!userData && (
+            <div className="search-section">
+              <form onSubmit={handleSearch} className="search-form">
                 <input
-                  type="password"
-                  placeholder="GitHub Personal Access Token"
-                  value={githubToken}
-                  onChange={(e) => handleTokenSave(e.target.value)}
-                  className="token-input"
+                  type="text"
+                  placeholder="Enter GitHub username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="search-input"
                 />
-                <span className="token-hint">
-                  {githubToken ? "Token saved (5000 req/hr)" : "Add token for 5000 req/hr"}
-                </span>
-              </div>
-            )}
+                <button type="submit" className="search-btn" disabled={loading}>
+                  {loading ? "Searching..." : "Search"}
+                </button>
+              </form>
 
-            {recentSearches.length > 0 && (
-              <div className="recent-searches">
-                <div className="recent-header">
-                  <span>Recent Searches:</span>
+              {rateLimitRemaining !== null && (
+                <div className="rate-limit-info">
+                  <span className="rate-limit-text">
+                    {githubToken ? "Authenticated" : "Public"} API: {rateLimitRemaining} requests remaining
+                    {rateLimitReset && rateLimitRemaining < 10 && (
+                      <span className="rate-limit-reset"> (resets in {getTimeUntilReset()})</span>
+                    )}
+                  </span>
                   <button
-                    className="clear-all-btn"
-                    onClick={clearAllRecentSearches}
+                    className="token-toggle-btn"
+                    onClick={() => setShowTokenInput(!showTokenInput)}
                   >
-                    Clear All
+                    {showTokenInput ? "Hide" : "Token"}
                   </button>
                 </div>
-                <div className="recent-list">
-                  {recentSearches.map((search, index) => (
-                    <button
-                      key={index}
-                      className="recent-item"
-                      onClick={() => {
-                        setUsername(search);
-                        performSearch(search);
-                      }}
-                    >
-                      {search}
+              )}
+
+              {showTokenInput && (
+                <div className="token-input-section">
+                  <input
+                    type="password"
+                    placeholder="GitHub Personal Access Token"
+                    value={githubToken}
+                    onChange={(e) => handleTokenSave(e.target.value)}
+                    className="token-input"
+                  />
+                  <span className="token-hint">
+                    {githubToken ? "Token saved (5000 req/hr)" : "Add token for 5000 req/hr"}
+                  </span>
+                </div>
+              )}
+
+              {recentSearches.length > 0 && (
+                <div className="recent-searches">
+                  <div className="recent-header">
+                    <span>Recent Searches:</span>
+                    <button className="clear-all-btn" onClick={clearAllRecentSearches}>
+                      Clear All
                     </button>
-                  ))}
+                  </div>
+                  <div className="recent-list">
+                    {recentSearches.map((search, index) => (
+                      <button
+                        key={index}
+                        className="recent-item"
+                        onClick={() => {
+                          setUsername(search);
+                          performSearch(search);
+                        }}
+                      >
+                        {search}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {!userData && popularDevs.length > 0 && (
-              <div className="popular-profiles-section">
-                <h3 className="popular-profiles-heading">Popular Profiles</h3>
-                <p className="popular-profiles-subtext">
-                  Discover and explore these popular GitHub developers.
-                </p>
-                <div className="popular-profiles-grid">
-                  {popularDevs.map((dev) => (
-                    <div
-                      key={dev.id}
-                      className="popular-profile-card"
-                      onClick={() => performSearch(dev.login)}
-                    >
-                      <img
-                        src={dev.avatar_url}
-                        alt={dev.login}
-                        className="popular-profile-avatar"
-                      />
-                      <div className="popular-profile-info">
-                        <span className="popular-profile-name">
-                          {dev.name || dev.login}
-                        </span>
-                        <span className="popular-profile-username">
-                          @{dev.login}
-                        </span>
+              {popularDevs.length > 0 && (
+                <div className="popular-profiles-section">
+                  <h3 className="popular-profiles-heading">Popular Profiles</h3>
+                  <p className="popular-profiles-subtext">
+                    Discover and explore these popular GitHub developers.
+                  </p>
+                  <div className="popular-profiles-grid">
+                    {popularDevs.map((dev) => (
+                      <div
+                        key={dev.id}
+                        className="popular-profile-card"
+                        onClick={() => performSearch(dev.login)}
+                      >
+                        <img
+                          src={dev.avatar_url}
+                          alt={dev.login}
+                          className="popular-profile-avatar"
+                        />
+                        <div className="popular-profile-info">
+                          <span className="popular-profile-name">
+                            {dev.name || dev.login}
+                          </span>
+                          <span className="popular-profile-username">
+                            @{dev.login}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          {error && <div className="error-message">{error}</div>}
+              {error && <div className="error-message">{error}</div>}
+            </div>
+          )}
 
           {userData && (
-            <div className="user-profile">
-              <div className="profile-header">
-                <img
-                  src={userData.avatar_url}
-                  alt={userData.login}
-                  className="avatar"
-                />
-                <div className="profile-info">
-                  <h2>{userData.name || userData.login}</h2>
-                  <p>@{userData.login}</p>
-                  {userData.bio && <p className="bio">{userData.bio}</p>}
-
-                  <button
-                    className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
-                    onClick={() => handleShortlistDev(userData)}
-                  >
-                    {shortlistedDevs.some((d) => d.login === userData.login)
-                      ? "Remove from Shortlist"
-                      : "Shortlist Developer"}
-                  </button>
-
-                  <h4 className="contact-info-title">Contact Info</h4>
-                  <div className="contact-info">
-                    {socialLinks.website && (
-                      <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <FaGlobe className="contact-icon" /> <span className="contact-text">{socialLinks.website}</span>
-                      </a>
-                    )}
-
-                    {userData.email && (
-                      <a href={`mailto:${userData.email}`} className="contact-item" title={userData.email}>
-                        <FaEnvelope className="contact-icon" /> <span className="contact-text">{userData.email}</span>
-                      </a>
-                    )}
-
-                    {socialLinks.linkedin && (
-                      <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <FaLinkedin className="contact-icon" /> <span className="contact-text">{socialLinks.linkedin}</span>
-                      </a>
-                    )}
-
-                    {socialLinks.twitter && (
-                      <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <FaTwitter className="contact-icon" /> <span className="contact-text">{socialLinks.twitter}</span>
-                      </a>
-                    )}
-
-                    {socialLinks.facebook && (
-                      <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <FaFacebook className="contact-icon" /> <span className="contact-text">{socialLinks.facebook}</span>
-                      </a>
-                    )}
-
-                    {socialLinks.instagram && (
-                      <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <FaInstagram className="contact-icon" /> <span className="contact-text">{socialLinks.instagram}</span>
-                      </a>
-                    )}
-
-                    {socialLinks.github && (
-                      <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="contact-item">
-                        <FaGithub className="contact-icon" /> <span className="contact-text">{socialLinks.github}</span>
-                      </a>
-                    )}
-
-                    {!socialLinks.website && !userData.email && !socialLinks.linkedin &&
-                     !socialLinks.twitter && !socialLinks.facebook && !socialLinks.instagram && !socialLinks.github && (
-                      <p className="no-contact-info">No public contact information available.</p>
-                    )}
-                  </div>
-
-                  <div className="profile-stats">
-                    <div className="stat-item">
-                      <span className="stat-value">{userData.public_repos}</span>
-                      <span className="stat-label">Repos</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-value">{userData.followers}</span>
-                      <span className="stat-label">Followers</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-value">{userData.following}</span>
-                      <span className="stat-label">Following</span>
-                    </div>
-                  </div>
-
-                  <div className="profile-details">
-                    <h4>Professional Details</h4>
-                    {userData.company && (
-                      <div className="detail-item">
-                        <span className="detail-icon">🏢</span>
-                        <span>{userData.company}</span>
-                      </div>
-                    )}
-                    {userData.location && (
-                      <div className="detail-item">
-                        <span className="detail-icon">📍</span>
-                        <span>{userData.location}</span>
-                      </div>
-                    )}
-                    <div className="detail-item">
-                      <span className="detail-icon">💼</span>
-                      <span
-                        className={`hireable-badge ${userData.hireable ? "available" : "not-available"}`}
-                      >
-                        {userData.hireable ? "Available for hire" : "Not available for hire"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="account-info">
-                    <h4>Account Info</h4>
-                    <div className="detail-item">
-                      <span className="detail-icon">📅</span>
-                      <span>Joined: {new Date(userData.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-icon">⏱️</span>
-                      <span>Last active: {new Date(userData.updated_at).toLocaleDateString()}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-icon">🔗</span>
-                      <a
-                        href={userData.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="detail-link"
-                      >
-                        View on GitHub
-                      </a>
-                    </div>
-                  </div>
-                </div>
+            <div>
+              <div className="user-actions">
+                <button
+                  className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
+                  onClick={() => handleShortlistDev(userData)}
+                >
+                  {shortlistedDevs.some((d) => d.login === userData.login)
+                    ? "Remove from Shortlist"
+                    : "Shortlist Developer"}
+                </button>
               </div>
 
               {showReview === userData.login && (
@@ -779,7 +692,7 @@ function Developers({ onSignOut, onNavigate }) {
                                   setSelectedSkills((prev) =>
                                     prev.includes(skill)
                                       ? prev.filter((s) => s !== skill)
-                                      : [...prev, skill],
+                                      : [...prev, skill]
                                   );
                                 }}
                               >
@@ -835,43 +748,37 @@ function Developers({ onSignOut, onNavigate }) {
                   </div>
                 </div>
               )}
-            </div>
-          )}
 
-          {userData && repos.length > 0 && (
-            <div className="repos-section">
-              <div className="repos-header">
-                <h3>Repositories ({repos.length})</h3>
-              </div>
-              <div className="repos-list">
-                {repos.map((repo) => (
-                  <div key={repo.id} className="repo-card">
-                    <div className="repo-header">
-                      <a
-                        href={repo.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="repo-name"
-                      >
-                        {repo.name}
-                      </a>
-                      {shortlistedRepos.some((r) => r.id === repo.id) && (
-                        <span className="repo-shortlisted-badge">
-                          Shortlisted
-                        </span>
+              <div className="repos-section">
+                <div className="repos-header">
+                  <h3>Repositories ({repos.length})</h3>
+                </div>
+                <div className="repos-list">
+                  {repos.map((repo) => (
+                    <div key={repo.id} className="repo-card">
+                      <div className="repo-header">
+                        <a
+                          href={repo.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="repo-name"
+                        >
+                          {repo.name}
+                        </a>
+                        {shortlistedRepos.some((r) => r.id === repo.id) && (
+                          <span className="repo-shortlisted-badge">Shortlisted</span>
+                        )}
+                      </div>
+                      {repo.description && (
+                        <p className="repo-desc">{repo.description}</p>
                       )}
-                    </div>
-                    {repo.description && (
-                      <p className="repo-desc">{repo.description}</p>
-                    )}
-                    <div className="repo-meta">
-                      {repo.language && (
-                        <span className="repo-lang">{repo.language}</span>
-                      )}
-                      <span>⭐ {repo.stargazers_count}</span>
-                      <span>🍴 {repo.forks_count}</span>
-                    </div>
-                    <div className="repo-actions">
+                      <div className="repo-meta">
+                        {repo.language && (
+                          <span className="repo-lang">{repo.language}</span>
+                        )}
+                        <span>⭐ {repo.stargazers_count}</span>
+                        <span>🍴 {repo.forks_count}</span>
+                      </div>
                       <button
                         className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
                         onClick={() => handleShortlistRepo(repo)}
@@ -881,11 +788,11 @@ function Developers({ onSignOut, onNavigate }) {
                           : "Shortlist Repo"}
                       </button>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-            )}
+          )}
         </div>
       </div>
 
@@ -894,9 +801,9 @@ function Developers({ onSignOut, onNavigate }) {
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
             <div className="review-modal-header">
               <h3>
-                {shortlistRepoModal.action === 'remove'
-                  ? 'Remove Repository'
-                  : 'Shortlist Repository'}
+                {shortlistRepoModal.action === "remove"
+                  ? "Remove Repository"
+                  : "Shortlist Repository"}
               </h3>
               <button className="review-modal-close" onClick={() => setShortlistRepoModal(null)}>✕</button>
             </div>
@@ -906,7 +813,7 @@ function Developers({ onSignOut, onNavigate }) {
                 <span>{shortlistRepoModal.repo.name}</span>
               </div>
 
-              {shortlistRepoModal.action === 'shortlist' && (
+              {shortlistRepoModal.action === "shortlist" && (
                 <div className="review-field">
                   <label>Label (optional):</label>
                   <input
@@ -919,23 +826,17 @@ function Developers({ onSignOut, onNavigate }) {
                 </div>
               )}
 
-              {shortlistRepoModal.action === 'remove' && (
-                <p style={{color: '#dc2626', fontSize: '0.9rem'}}>
+              {shortlistRepoModal.action === "remove" && (
+                <p style={{ color: "#dc2626", fontSize: "0.9rem" }}>
                   Are you sure you want to remove this repository from shortlist?
                 </p>
               )}
             </div>
             <div className="review-actions">
-              <button
-                className="confirm-btn"
-                onClick={confirmRepoShortlist}
-              >
-                {shortlistRepoModal.action === 'remove' ? 'Confirm Remove' : 'Shortlist'}
+              <button className="confirm-btn" onClick={confirmRepoShortlist}>
+                {shortlistRepoModal.action === "remove" ? "Confirm Remove" : "Shortlist"}
               </button>
-              <button
-                className="cancel-btn"
-                onClick={() => setShortlistRepoModal(null)}
-              >
+              <button className="cancel-btn" onClick={() => setShortlistRepoModal(null)}>
                 Cancel
               </button>
             </div>

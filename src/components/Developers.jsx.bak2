@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Sidebar from "./Sidebar";
 import "./Dashboard.css";
 import "./Developers.css";
@@ -227,7 +227,6 @@ function Developers({ onSignOut, onNavigate }) {
       "sindresorhus",
       "addyosmani",
       "tj",
-      "paulirish",
       "mdo",
       "fat",
     ];
@@ -726,13 +725,7 @@ function Developers({ onSignOut, onNavigate }) {
 
           {error && <div className="error-message">{error}</div>}
 
-          {userData && (() => {
-            const linkedInMatch = userData.bio && userData.bio.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i);
-            const linkedInUrl = linkedInMatch
-              ? (linkedInMatch[0].startsWith('http') ? linkedInMatch[0] : 'https://' + linkedInMatch[0])
-              : null;
-
-            return (
+          {userData && (
             <div className="user-profile">
               <div className="profile-header">
                 <img
@@ -740,21 +733,21 @@ function Developers({ onSignOut, onNavigate }) {
                   alt={userData.login}
                   className="avatar"
                 />
-                 <div className="profile-info">
-                   <h2>{userData.name || userData.login}</h2>
-                   <p>@{userData.login}</p>
-                   {userData.bio && <p className="bio">{userData.bio}</p>}
+                <div className="profile-info">
+                  <h2>{userData.name || userData.login}</h2>
+                  <p>@{userData.login}</p>
+                  {userData.bio && <p className="bio">{userData.bio}</p>}
 
-                   <button
-                     className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
-                     onClick={() => handleShortlistDev(userData)}
-                   >
-                     {shortlistedDevs.some((d) => d.login === userData.login)
-                       ? "Remove from Shortlist"
-                       : "Shortlist Developer"}
-                   </button>
+                  <button
+                    className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
+                    onClick={() => handleShortlistDev(userData)}
+                  >
+                    {shortlistedDevs.some((d) => d.login === userData.login)
+                      ? "Remove from Shortlist"
+                      : "Shortlist Developer"}
+                  </button>
 
-                   <h4 className="contact-info-title">Contact Info</h4>
+                  <h4 className="contact-info-title">Contact Info</h4>
                   <div className="contact-info">
                     {socialLinks.website && (
                       <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="contact-item">
@@ -833,19 +826,6 @@ function Developers({ onSignOut, onNavigate }) {
                         <span>{userData.location}</span>
                       </div>
                     )}
-                    {userData.twitter_username && (
-                      <div className="detail-item">
-                        <span className="detail-icon">🐦</span>
-                        <a
-                          href={`https://twitter.com/${userData.twitter_username}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="detail-link"
-                        >
-                          @{userData.twitter_username}
-                        </a>
-                      </div>
-                    )}
                     <div className="detail-item">
                       <span className="detail-icon">💼</span>
                       <span
@@ -855,20 +835,6 @@ function Developers({ onSignOut, onNavigate }) {
                       </span>
                     </div>
                   </div>
-
-                  {repos.length > 0 && getDeveloperSkills(repos).length > 0 && (
-                    <div className="skills-section">
-                      <h4>Skills & Technologies</h4>
-                      <div className="skills-tags">
-                        {getDeveloperSkills(repos).map(([lang, count]) => (
-                          <span key={lang} className="skill-tag">
-                            {lang}
-                            <span className="skill-count">{count}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   <div className="account-info">
                     <h4>Account Info</h4>
@@ -892,168 +858,168 @@ function Developers({ onSignOut, onNavigate }) {
                       </a>
                     </div>
                   </div>
-
-                  )}
-
-                  {showReview === userData.login && (
-                    <div className="review-modal-overlay" onClick={() => setShowReview(null)}>
-                      <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="review-modal-header">
-                          <h3>Review {userData.name || userData.login}</h3>
-                          <button className="review-modal-close" onClick={() => setShowReview(null)}>✕</button>
-                        </div>
-                        <div className="review-modal-body">
-                          <div className="review-field">
-                            <label>Role:</label>
-                            {isCustomRole ? (
-                              <input
-                                type="text"
-                                value={customRole}
-                                onChange={(e) => setCustomRole(e.target.value)}
-                                placeholder="Enter custom role..."
-                                className="role-input"
-                                autoFocus
-                              />
-                            ) : (
-                              <select
-                                value={selectedRole}
-                                onChange={(e) => {
-                                  if (e.target.value === "custom") {
-                                    setIsCustomRole(true);
-                                    setSelectedRole("");
-                                  } else {
-                                    setSelectedRole(e.target.value);
-                                    setSelectedSkills([]);
-                                  }
-                                }}
-                              >
-                                <option value="">Select a role</option>
-                                {roleOptions.map((role) => (
-                                  <option key={role} value={role}>
-                                    {role}
-                                  </option>
-                                ))}
-                                <option value="custom">+ Type custom role...</option>
-                              </select>
-                            )}
-                            {isCustomRole && (
-                              <button
-                                className="back-to-select"
-                                onClick={() => {
-                                  setIsCustomRole(false);
-                                  setCustomRole("");
-                                }}
-                              >
-                                ← Back to list
-                              </button>
-                            )}
-                          </div>
-
-                          {selectedRole && skillsByRole[selectedRole] && (
-                            <div className="review-field">
-                              <label>Skills:</label>
-                              <div className="skills-container">
-                                {skillsByRole[selectedRole].map((skill) => (
-                                  <button
-                                    key={skill}
-                                    className={`skill-btn ${selectedSkills.includes(skill) ? "selected" : ""}`}
-                                    onClick={() => {
-                                      setSelectedSkills((prev) =>
-                                        prev.includes(skill)
-                                          ? prev.filter((s) => s !== skill)
-                                          : [...prev, skill],
-                                      );
-                                    }}
-                                  >
-                                    {skill}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="review-field">
-                            <label>Rating:</label>
-                            <div className="rating-container">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  key={star}
-                                  className={`star-btn ${star <= rating ? "active" : ""}`}
-                                  onClick={() => setRating(star)}
-                                >
-                                  ★
-                                </button>
-                              ))}
-                              {rating > 0 && (
-                                <span className="rating-text">{rating}/5</span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="review-field">
-                            <label>Message:</label>
-                            <textarea
-                              value={reviewMessage}
-                              onChange={(e) => setReviewMessage(e.target.value)}
-                              placeholder="Add a message about this developer..."
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                        <div className="review-actions">
-                          <button
-                            className="confirm-btn"
-                            onClick={() => confirmShortlistDev(userData)}
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            className="cancel-btn"
-                            onClick={() => setShowReview(null)}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
-            );
-          })()}
 
-              <div className="repos-section">
-                <div className="repos-header">
-                  <h3>Repositories ({repos.length})</h3>
-                </div>
-                <div className="repos-list">
-                  {repos.map((repo) => (
-                    <div key={repo.id} className="repo-card">
-                      <div className="repo-header">
-                        <a
-                          href={repo.html_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="repo-name"
-                        >
-                          {repo.name}
-                        </a>
-                        {shortlistedRepos.some((r) => r.id === repo.id) && (
-                          <span className="repo-shortlisted-badge">
-                            Shortlisted
-                          </span>
+              {showReview === userData.login && (
+                <div className="review-modal-overlay" onClick={() => setShowReview(null)}>
+                  <div className="review-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="review-modal-header">
+                      <h3>Review {userData.name || userData.login}</h3>
+                      <button className="review-modal-close" onClick={() => setShowReview(null)}>✕</button>
+                    </div>
+                    <div className="review-modal-body">
+                      <div className="review-field">
+                        <label>Role:</label>
+                        {isCustomRole ? (
+                          <input
+                            type="text"
+                            value={customRole}
+                            onChange={(e) => setCustomRole(e.target.value)}
+                            placeholder="Enter custom role..."
+                            className="role-input"
+                            autoFocus
+                          />
+                        ) : (
+                          <select
+                            value={selectedRole}
+                            onChange={(e) => {
+                              if (e.target.value === "custom") {
+                                setIsCustomRole(true);
+                                setSelectedRole("");
+                              } else {
+                                setSelectedRole(e.target.value);
+                                setSelectedSkills([]);
+                              }
+                            }}
+                          >
+                            <option value="">Select a role</option>
+                            {roleOptions.map((role) => (
+                              <option key={role} value={role}>
+                                {role}
+                              </option>
+                            ))}
+                            <option value="custom">+ Type custom role...</option>
+                          </select>
+                        )}
+                        {isCustomRole && (
+                          <button
+                            className="back-to-select"
+                            onClick={() => {
+                              setIsCustomRole(false);
+                              setCustomRole("");
+                            }}
+                          >
+                            ← Back to list
+                          </button>
                         )}
                       </div>
-                      {repo.description && (
-                        <p className="repo-desc">{repo.description}</p>
+
+                      {selectedRole && skillsByRole[selectedRole] && (
+                        <div className="review-field">
+                          <label>Skills:</label>
+                          <div className="skills-container">
+                            {skillsByRole[selectedRole].map((skill) => (
+                              <button
+                                key={skill}
+                                className={`skill-btn ${selectedSkills.includes(skill) ? "selected" : ""}`}
+                                onClick={() => {
+                                  setSelectedSkills((prev) =>
+                                    prev.includes(skill)
+                                      ? prev.filter((s) => s !== skill)
+                                      : [...prev, skill],
+                                  );
+                                }}
+                              >
+                                {skill}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                      <div className="repo-meta">
-                        {repo.language && (
-                          <span className="repo-lang">{repo.language}</span>
-                        )}
-                        <span>⭐ {repo.stargazers_count}</span>
-                        <span>🍴 {repo.forks_count}</span>
+
+                      <div className="review-field">
+                        <label>Rating:</label>
+                        <div className="rating-container">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              className={`star-btn ${star <= rating ? "active" : ""}`}
+                              onClick={() => setRating(star)}
+                            >
+                              ★
+                            </button>
+                          ))}
+                          {rating > 0 && (
+                            <span className="rating-text">{rating}/5</span>
+                          )}
+                        </div>
                       </div>
+
+                      <div className="review-field">
+                        <label>Message:</label>
+                        <textarea
+                          value={reviewMessage}
+                          onChange={(e) => setReviewMessage(e.target.value)}
+                          placeholder="Add a message about this developer..."
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    <div className="review-actions">
+                      <button
+                        className="confirm-btn"
+                        onClick={() => confirmShortlistDev(userData)}
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        className="cancel-btn"
+                        onClick={() => setShowReview(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {userData && repos.length > 0 && (
+            <div className="repos-section">
+              <div className="repos-header">
+                <h3>Repositories ({repos.length})</h3>
+              </div>
+              <div className="repos-list">
+                {repos.map((repo) => (
+                  <div key={repo.id} className="repo-card">
+                    <div className="repo-header">
+                      <a
+                        href={repo.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="repo-name"
+                      >
+                        {repo.name}
+                      </a>
+                      {shortlistedRepos.some((r) => r.id === repo.id) && (
+                        <span className="repo-shortlisted-badge">
+                          Shortlisted
+                        </span>
+                      )}
+                    </div>
+                    {repo.description && (
+                      <p className="repo-desc">{repo.description}</p>
+                    )}
+                    <div className="repo-meta">
+                      {repo.language && (
+                        <span className="repo-lang">{repo.language}</span>
+                      )}
+                      <span>⭐ {repo.stargazers_count}</span>
+                      <span>🍴 {repo.forks_count}</span>
+                    </div>
+                    <div className="repo-actions">
                       <button
                         className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
                         onClick={() => handleShortlistRepo(repo)}
@@ -1063,10 +1029,11 @@ function Developers({ onSignOut, onNavigate }) {
                           : "Shortlist Repo"}
                       </button>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+            )}
         </div>
       </div>
 
