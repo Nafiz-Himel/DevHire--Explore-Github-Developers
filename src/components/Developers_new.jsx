@@ -230,6 +230,14 @@ function Developers({ onSignOut, onNavigate }) {
       "paulirish",
       "mdo",
       "fat",
+      "yyx990803",
+      "dhh",
+      "jeresig",
+      "wycats",
+      "sstephenson",
+      "brianleroux",
+      "substack",
+      "rauchg",
     ];
     const fetchPopular = async () => {
       try {
