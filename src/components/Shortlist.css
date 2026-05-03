@@ -95,7 +95,7 @@
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
   transition: box-shadow 0.2s, border-color 0.2s;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 14px;
 }
 
@@ -190,7 +190,6 @@
   font-size: 0.8rem;
   color: #2563eb;
   cursor: pointer;
-  margin-top: 8px;
   transition: background 0.2s;
   font-family: inherit;
   min-height: 40px;
@@ -200,39 +199,93 @@
   background: #f8fafc;
 }
 
-.contact-info {
-  margin-top: 8px;
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.contact-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.contact-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15);
+}
+
+.contact-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-dev-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modal-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.contact-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.contact-modal-close:hover {
+  background: #f1f5f9;
+}
+
+.contact-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-modal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
   background: #f8fafc;
   border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.contact-item {
-  color: #64748b;
+  color: #475569;
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  transition: color 0.2s;
-  min-width: 0;
-  overflow: hidden;
+  font-size: 0.85rem;
+  transition: background 0.2s;
 }
 
-.contact-item:hover {
+.contact-modal-item:hover {
+  background: #f1f5f9;
   color: #2563eb;
-}
-
-.contact-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
 }
 
 .remove-btn {

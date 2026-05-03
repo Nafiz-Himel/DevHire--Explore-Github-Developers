@@ -104,20 +104,26 @@ function Developers({ onSignOut, onNavigate }) {
   const [repoLabelText, setRepoLabelText] = useState("");
   const [popularDevs, setPopularDevs] = useState([]);
 
-  // Clean URL for display
-  const cleanUrl = (url) => {
-    if (!url) return '';
-    return url.replace(/^https?:\/\//, '');
-  };
-
-  // Extract LinkedIn URL from bio
+  // Extract LinkedIn URL from profile
   const linkedInUrl = useMemo(() => {
-    if (!userData?.bio) return null;
-    const match = userData.bio.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i);
-    if (!match) return null;
-    let url = match[0];
-    if (!url.startsWith('http')) url = 'https://' + url;
-    return url;
+    // Check blog field (many users put LinkedIn here)
+    if (userData?.blog) {
+      const blogClean = userData.blog.startsWith('http')
+        ? userData.blog
+        : 'https://' + userData.blog;
+      if (blogClean.includes('linkedin.com/in/')) {
+        const match = blogClean.match(/https?:\/\/[^\s]*linkedin\.com\/in\/[\w-]+/i);
+        if (match) return match[0];
+      }
+    }
+
+    // Check bio field
+    if (userData?.bio) {
+      const match = userData.bio.match(/https?:\/\/[^\s]*linkedin\.com\/in\/[\w-]+/i);
+      if (match) return match[0];
+    }
+
+    return null;
   }, [userData]);
 
   useEffect(() => {
@@ -567,7 +573,7 @@ function Developers({ onSignOut, onNavigate }) {
                          className="contact-item"
                          title={linkedInUrl}
                        >
-                         <span role="img" aria-label="linkedin">📎</span> <span className="contact-text">{cleanUrl(linkedInUrl)}</span>
+                         <span role="img" aria-label="linkedin">📎</span> <span className="contact-text">{linkedInUrl}</span>
                        </a>
                      )}
                     {userData.twitter_username && (
@@ -759,76 +765,78 @@ function Developers({ onSignOut, onNavigate }) {
             </div>
           )}
 
-          <div className="repos-section">
-            <div className="repos-header">
-              <h3>Repositories ({repos.length})</h3>
-            </div>
-            <div className="repos-list">
-              {repos.map((repo) => (
-                <div key={repo.id} className="repo-card">
-                  <div className="repo-header">
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="repo-name"
-                    >
-                      {repo.name}
-                    </a>
-                    {shortlistedRepos.some((r) => r.id === repo.id) && (
-                      <span className="repo-shortlisted-badge">
-                        Shortlisted
-                      </span>
+          {userData && repos.length > 0 && (
+            <div className="repos-section">
+              <div className="repos-header">
+                <h3>Repositories ({repos.length})</h3>
+              </div>
+              <div className="repos-list">
+                {repos.map((repo) => (
+                  <div key={repo.id} className="repo-card">
+                    <div className="repo-header">
+                      <a
+                        href={repo.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="repo-name"
+                      >
+                        {repo.name}
+                      </a>
+                      {shortlistedRepos.some((r) => r.id === repo.id) && (
+                        <span className="repo-shortlisted-badge">
+                          Shortlisted
+                        </span>
+                      )}
+                    </div>
+                    {repo.description && (
+                      <p className="repo-desc">{repo.description}</p>
                     )}
-                  </div>
-                  {repo.description && (
-                    <p className="repo-desc">{repo.description}</p>
-                  )}
-                  <div className="repo-meta">
-                    {repo.language && (
-                      <span className="repo-lang">{repo.language}</span>
-                    )}
-                    <span>⭐ {repo.stargazers_count}</span>
-                    <span>🍴 {repo.forks_count}</span>
-                  </div>
-                  <div className="repo-actions">
-                    <button
-                      className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
-                      onClick={() => handleShortlistRepo(repo)}
-                    >
-                      {shortlistedRepos.some((r) => r.id === repo.id)
-                        ? "Remove"
-                        : "Shortlist Repo"}
-                    </button>
+                    <div className="repo-meta">
+                      {repo.language && (
+                        <span className="repo-lang">{repo.language}</span>
+                      )}
+                      <span>⭐ {repo.stargazers_count}</span>
+                      <span>🍴 {repo.forks_count}</span>
+                    </div>
+                    <div className="repo-actions">
+                      <button
+                        className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
+                        onClick={() => handleShortlistRepo(repo)}
+                      >
+                        {shortlistedRepos.some((r) => r.id === repo.id)
+                          ? "Remove"
+                          : "Shortlist Repo"}
+                      </button>
 
-                    {showRepoLabel === repo.id && (
-                      <div className="repo-label-inline">
-                        <input
-                          type="text"
-                          placeholder="Enter label..."
-                          value={repoLabelText}
-                          onChange={(e) => setRepoLabelText(e.target.value)}
-                          className="repo-label-input"
-                        />
-                        <button
-                          className="confirm-btn"
-                          onClick={() => confirmRepoLabel(repo)}
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="cancel-btn"
-                          onClick={() => setShowRepoLabel(null)}
-                        >
-                          ✗
-                        </button>
-                      </div>
-                    )}
+                      {showRepoLabel === repo.id && (
+                        <div className="repo-label-inline">
+                          <input
+                            type="text"
+                            placeholder="Enter label..."
+                            value={repoLabelText}
+                            onChange={(e) => setRepoLabelText(e.target.value)}
+                            className="repo-label-input"
+                          />
+                          <button
+                            className="confirm-btn"
+                            onClick={() => confirmRepoLabel(repo)}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => setShowRepoLabel(null)}
+                          >
+                            ✗
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </Sidebar>

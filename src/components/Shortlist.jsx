@@ -9,7 +9,7 @@ function Shortlist({ onSignOut, onNavigate }) {
   const [activeTab, setActiveTab] = useState('developers')
   const [filterRole, setFilterRole] = useState('All')
   const [uniqueRoles, setUniqueRoles] = useState([])
-  const [expandedContacts, setExpandedContacts] = useState({})
+  const [contactModalDev, setContactModalDev] = useState(null)
 
   useEffect(() => {
     const devData = JSON.parse(localStorage.getItem('devShortlist') || '[]')
@@ -36,8 +36,8 @@ function Shortlist({ onSignOut, onNavigate }) {
     localStorage.setItem('shortlistedRepos', JSON.stringify(updatedList))
   }
 
-  const toggleContact = (devId) => {
-    setExpandedContacts(prev => ({ ...prev, [devId]: !prev[devId] }))
+  const openContactModal = (dev) => {
+    setContactModalDev(dev)
   }
 
   return (
@@ -112,58 +112,41 @@ function Shortlist({ onSignOut, onNavigate }) {
                     })
                     .map((dev) => (
                     <div key={dev.id} className="shortlist-card">
-                      <img src={dev.avatar_url} alt={dev.login} className="card-avatar" />
-                      <div className="card-details">
-                        <span className="card-username">{dev.name || dev.login}</span>
-                        <a href={dev.html_url} target="_blank" rel="noopener noreferrer" className="card-link">
-                          @{dev.login}
-                        </a>
-                        {dev.role && <span className="role-tag">{dev.role}</span>}
-                        {dev.message && <p className="dev-message">{dev.message}</p>}
-                        {dev.skills && dev.skills.length > 0 && (
-                          <div className="skills-tags-container">
-                            {dev.skills.map(skill => (
-                              <span key={skill} className="skill-tag">{skill}</span>
-                            ))}
-                          </div>
-                        )}
-                        {dev.rating && (
-                          <div className="dev-rating">★ {dev.rating}/5</div>
-                        )}
-
-                        <button
-                          onClick={() => toggleContact(dev.id)}
-                          className="contact-toggle"
-                        >
-                          {expandedContacts[dev.id] ? 'Hide Contact ▲' : '📞 Contact ▼'}
-                        </button>
-
-                        {expandedContacts[dev.id] && (
-                          <div className="contact-info">
-                            {dev.blog && (
-                              <a href={dev.blog.startsWith('http') ? dev.blog : `https://${dev.blog}`}
-                                 target="_blank" rel="noopener noreferrer" className="contact-item"
-                                 title={dev.blog}>
-                                🌐 <span className="contact-text">{dev.blog}</span>
-                              </a>
-                            )}
-                            {dev.email && (
-                              <a href={`mailto:${dev.email}`} className="contact-item"
-                                 title={dev.email}>
-                                📧 <span className="contact-text">{dev.email}</span>
-                              </a>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        className="remove-btn"
-                        onClick={() => handleRemoveDev(dev.id)}
-                      >
-                        Remove
-                      </button>
-                    </div>
+                       <img src={dev.avatar_url} alt={dev.login} className="card-avatar" />
+                       <div className="card-details">
+                         <span className="card-username">{dev.name || dev.login}</span>
+                         <a href={dev.html_url} target="_blank" rel="noopener noreferrer" className="card-link">
+                           @{dev.login}
+                         </a>
+                         {dev.role && <span className="role-tag">{dev.role}</span>}
+                         {dev.message && <p className="dev-message">{dev.message}</p>}
+                         {dev.skills && dev.skills.length > 0 && (
+                           <div className="skills-tags-container">
+                             {dev.skills.map(skill => (
+                               <span key={skill} className="skill-tag">{skill}</span>
+                             ))}
+                           </div>
+                         )}
+                         {dev.rating && (
+                           <div className="dev-rating">★ {dev.rating}/5</div>
+                         )}
+                       </div>
+                       <div className="card-actions">
+                         <button
+                           onClick={() => openContactModal(dev)}
+                           className="contact-toggle"
+                         >
+                           Contact
+                         </button>
+                         <button
+                           type="button"
+                           className="remove-btn"
+                           onClick={() => handleRemoveDev(dev.id)}
+                         >
+                           Remove
+                         </button>
+                       </div>
+                     </div>
                   ))}
                 </div>
               ) : (
@@ -239,6 +222,32 @@ function Shortlist({ onSignOut, onNavigate }) {
           </div>
         </div>
       </div>
+      {contactModalDev && (
+        <div className="contact-modal-overlay" onClick={() => setContactModalDev(null)}>
+          <div className="contact-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="contact-modal-header">
+              <div className="modal-dev-info">
+                <img src={contactModalDev.avatar_url} alt="" className="modal-avatar" />
+                <span>{contactModalDev.name || contactModalDev.login}</span>
+              </div>
+              <button className="contact-modal-close" onClick={() => setContactModalDev(null)}>✕</button>
+            </div>
+            <div className="contact-modal-body">
+              {contactModalDev.blog && (
+                <a href={contactModalDev.blog.startsWith('http') ? contactModalDev.blog : `https://${contactModalDev.blog}`}
+                   target="_blank" rel="noopener noreferrer" className="contact-modal-item">
+                  🌐 {contactModalDev.blog}
+                </a>
+              )}
+              {contactModalDev.email && (
+                <a href={`mailto:${contactModalDev.email}`} className="contact-modal-item">
+                  📧 {contactModalDev.email}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </Sidebar>
   )
 }
