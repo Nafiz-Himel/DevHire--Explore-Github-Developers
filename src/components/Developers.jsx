@@ -1,62 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import './Dashboard.css';
 import './Developers.css';
+
+const roleOptions = [
+  'Frontend Developer',
+  'Backend Developer',
+  'Fullstack Developer',
+  'DevOps Engineer',
+  'Mobile Developer'
+];
+
+const frontendSkills = ['React', 'TypeScript', 'Vue.js', 'Angular', 'HTML5', 'CSS3', 'Tailwind CSS', 'Next.js'];
 
 function Developers({ onSignOut, onNavigate }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [profile, setProfile] = useState(null);
+  const [username, setUsername] = useState('');
+  const [userData, setUserData] = useState(null);
   const [repos, setRepos] = useState([]);
-  const [reposLoading, setReposLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showDetails, setShowDetails] = useState(false);
-  const [notification, setNotification] = useState('');
-  const [recentSearches, setRecentSearches] = useState([]);
-  const [shortlistedRepos, setShortlistedRepos] = useState([]);
+  const [shortlistedDevs, setShortlistedDevs] = useState(() => {
+    const saved = localStorage.getItem('devShortlist');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [shortlistedRepos, setShortlistedRepos] = useState(() => {
+    const saved = localStorage.getItem('shortlistedRepos');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [recentSearches, setRecentSearches] = useState(() => {
+    const saved = localStorage.getItem('recentSearches');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showReview, setShowReview] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [selectedFrontendFeatures, setSelectedFrontendFeatures] = useState([]);
+  const [showRepoLabel, setShowRepoLabel] = useState(null);
+  const [repoLabelText, setRepoLabelText] = useState('');
 
   useEffect(() => {
-    const savedRecent = JSON.parse(localStorage.getItem('recentSearches') || '[]');
-    setRecentSearches(savedRecent);
-    const savedRepos = JSON.parse(localStorage.getItem('shortlistedRepos') || '[]');
-    setShortlistedRepos(savedRepos);
-  }, []);
+    localStorage.setItem('devShortlist', JSON.stringify(shortlistedDevs));
+  }, [shortlistedDevs]);
 
-  const showNotification = (msg) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(''), 3000);
-  };
+  useEffect(() => {
+    localStorage.setItem('shortlistedRepos', JSON.stringify(shortlistedRepos));
+  }, [shortlistedRepos]);
 
-  const updateRecentSearches = (username) => {
-    const updated = [username, ...recentSearches.filter(name => name !== username)].slice(0, 5);
-    setRecentSearches(updated);
-    localStorage.setItem('recentSearches', JSON.stringify(updated));
-  };
+  useEffect(() => {
+    localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+  }, [recentSearches]);
 
-  const handleSearch = async (targetUsername) => {
-    const username = targetUsername || searchTerm.trim();
-    if (!username) { setError('Please enter a GitHub username'); return; }
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!username.trim()) return;
 
     setLoading(true);
     setError('');
-    setProfile(null);
+    setUserData(null);
     setRepos([]);
-    setShowDetails(false);
 
     try {
-      const response = await fetch(`https://api.github.com/users/${username}`, {
-        headers: { 'Accept': 'application/vnd.github.v3+json' }
-      });
+      const userRes = await fetch(`https://api.github.com/users/${username}`);
+      if (!userRes.ok) throw new Error('User not found');
+      const userData = await userRes.json();
 
-      if (response.status === 404) throw new Error('User not found. Please check the spelling.');
-      else if (response.status === 403) throw new Error('API limit exceeded. Try again later.');
-      else if (!response.ok) throw new Error('Network error. Please try again.');
+      const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
+      const reposData = await reposRes.json();
 
-      const data = await response.json();
-      setProfile(data);
-      updateRecentSearches(username);
+      setUserData(userData);
+      setRepos(reposData);
 
-      const currentCount = parseInt(localStorage.getItem('searchCount') || '0');
-      localStorage.setItem('searchCount', (currentCount + 1).toString());
+      if (!recentSearches.includes(username)) {
+        setRecentSearches(prev => [username, ...prev].slice(0, 10));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,92 +80,105 @@ function Developers({ onSignOut, onNavigate }) {
     }
   };
 
-  const fetchRepos = async (username) => {
-    setReposLoading(true);
-    try {
-      const response = await fetch(
-        `https://api.github.com/users/${username}/repos?sort=updated&per_page=30`,
-        { headers: { 'Accept': 'application/vnd.github.v3+json' } }
-      );
-      if (!response.ok) throw new Error('Failed to fetch repos');
-      const data = await response.json();
-      setRepos(data);
-    } catch (err) {
-      showNotification('Could not load repositories.');
-    } finally {
-      setReposLoading(false);
-    }
-  };
-
-  const handleViewDetails = () => {
-    setShowDetails(true);
-    fetchRepos(profile.login);
-  };
-
-  const addToShortlist = () => {
-    const savedShortlist = JSON.parse(localStorage.getItem('devShortlist') || '[]');
-    const isAlreadyAdded = savedShortlist.some(item => item.id === profile.id);
-    if (!isAlreadyAdded) {
-      localStorage.setItem('devShortlist', JSON.stringify([...savedShortlist, profile]));
-      showNotification(`${profile.name || profile.login} added to shortlist!`);
+  const handleShortlistDev = (dev) => {
+    const isShortlisted = shortlistedDevs.some(d => d.login === dev.login);
+    if (isShortlisted) {
+      setShortlistedDevs(prev => prev.filter(d => d.login !== dev.login));
     } else {
-      showNotification('Already in shortlist.');
+      setShowReview(dev.login);
+      setSelectedRole('');
+      setReviewMessage('');
+      setSelectedFrontendFeatures([]);
     }
   };
 
-  const toggleRepoShortlist = (repo) => {
-    const current = JSON.parse(localStorage.getItem('shortlistedRepos') || '[]');
-    const isAdded = current.some(r => r.id === repo.id);
-    let updated;
-    if (isAdded) {
-      updated = current.filter(r => r.id !== repo.id);
-      showNotification(`"${repo.name}" removed from repo shortlist.`);
+  const confirmShortlistDev = (dev) => {
+    const devWithReview = {
+      ...dev,
+      role: selectedRole,
+      message: reviewMessage,
+      frontendFeatures: selectedFrontendFeatures
+    };
+    setShortlistedDevs(prev => [...prev, devWithReview]);
+    setShowReview(null);
+    setSelectedRole('');
+    setReviewMessage('');
+    setSelectedFrontendFeatures([]);
+  };
+
+  const handleShortlistRepo = (repo) => {
+    const isShortlisted = shortlistedRepos.some(r => r.id === repo.id);
+    if (isShortlisted) {
+      setShortlistedRepos(prev => prev.filter(r => r.id !== repo.id));
     } else {
-      updated = [...current, { ...repo, ownerLogin: profile.login, ownerAvatar: profile.avatar_url }];
-      showNotification(`"${repo.name}" added to repo shortlist!`);
+      setShowRepoLabel(repo.id);
+      setRepoLabelText('');
     }
-    localStorage.setItem('shortlistedRepos', JSON.stringify(updated));
-    setShortlistedRepos(updated);
   };
 
-  const isRepoShortlisted = (repoId) => shortlistedRepos.some(r => r.id === repoId);
+  const confirmRepoLabel = (repo) => {
+    const repoWithLabel = {
+      ...repo,
+      label: repoLabelText,
+      ownerLogin: repo.owner.login,
+      ownerAvatar: repo.owner.avatar_url
+    };
+    setShortlistedRepos(prev => [...prev, repoWithLabel]);
+    setShowRepoLabel(null);
+    setRepoLabelText('');
+  };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    handleSearch();
+  const handleNavigate = (page) => {
+    if (onNavigate) onNavigate(page);
+  };
+
+  const handleSignOut = () => {
+    if (onSignOut) onSignOut();
+  };
+
+  const clearAllRecentSearches = () => {
+    setRecentSearches([]);
+  };
+
+  const toggleFrontendFeature = (skill) => {
+    if (selectedFrontendFeatures.includes(skill)) {
+      setSelectedFrontendFeatures(prev => prev.filter(s => s !== skill));
+    } else {
+      setSelectedFrontendFeatures(prev => [...prev, skill]);
+    }
   };
 
   return (
     <div className={`dashboard-shell ${collapsed ? 'collapsed' : ''}`}>
-      {notification && <div className="custom-toast">{notification}</div>}
-
       <div className={`side ${collapsed ? 'collapsed' : ''}`}>
         <div className="side-logo">
           <div className="logo-mark">DH</div>
           <div className="logo-copy">DevHire</div>
         </div>
+
         <div className="side-nav">
           <button type="button" className="nav-link" onClick={() => onNavigate('dashboard')}>
             <span className="nav-icon">🏠</span>
-            <span className="nav-label">Dashboard</span>
+            {!collapsed && <span className="nav-label">Dashboard</span>}
           </button>
           <button type="button" className="nav-link active">
             <span className="nav-icon">💻</span>
-            <span className="nav-label">Developers</span>
+            {!collapsed && <span className="nav-label">Developers</span>}
           </button>
           <button type="button" className="nav-link" onClick={() => onNavigate('shortlist')}>
             <span className="nav-icon">⭐</span>
-            <span className="nav-label">Shortlist</span>
+            {!collapsed && <span className="nav-label">Shortlist</span>}
           </button>
         </div>
+
         <div className="side-footer">
           <button type="button" className="footer-button" onClick={() => setCollapsed((v) => !v)}>
             <span className="nav-icon">↔</span>
-            <span className="nav-label">Collapse</span>
+            {!collapsed && <span className="footer-label">Collapse</span>}
           </button>
-          <button type="button" className="footer-button logout" onClick={onSignOut}>
+          <button type="button" className="footer-button logout" onClick={handleSignOut}>
             <span className="nav-icon">🔓</span>
-            <span className="nav-label">Logout</span>
+            {!collapsed && <span className="footer-label">Logout</span>}
           </button>
         </div>
       </div>
@@ -161,180 +190,163 @@ function Developers({ onSignOut, onNavigate }) {
         </div>
 
         <div className="dashboard-main">
-          {!showDetails && (
-            <div className="dashboard-heading">
-              <h1>Developer Search</h1>
-              <p>Search by username and open profiles for repository-level review.</p>
-            </div>
-          )}
-
-          <div className="search-section">
-            {!showDetails && (
-              <>
-                <form className="search-bar" onSubmit={handleSubmit}>
-                  <input
-                    type="text"
-                    placeholder="Enter GitHub username"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <button type="submit" disabled={loading}>
-                    {loading ? 'Searching...' : 'Search'}
-                  </button>
-                </form>
-
-                {recentSearches.length > 0 && (
-                  <div className="recent-searches" style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#666' }}>Recent:</span>
-                    {recentSearches.map((name) => (
-                      <button
-                        key={name}
-                        onClick={() => handleSearch(name)}
-                        style={{ background: '#f0f2f5', border: 'none', padding: '4px 10px', borderRadius: '15px', fontSize: '0.8rem', cursor: 'pointer', color: '#2563eb' }}
-                      >
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            {error && <p className="error-message" style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
+          <div className="dashboard-heading">
+            <h1>Developers</h1>
+            <p>Search and explore GitHub developers.</p>
           </div>
 
-          {/* Search result card (before view details) */}
-          {profile && !showDetails && (
-            <div className="search-results-container">
-              <div className="popular-developer-card">
-                <img src={profile.avatar_url} alt={profile.login} className="popular-avatar" />
-                <div className="popular-details">
-                  <span className="popular-username">{profile.name || profile.login}</span>
-                  <span className="popular-link">@{profile.login}</span>
-                </div>
-                <button type="button" className="popular-button" onClick={handleViewDetails}>
-                  View Details
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Full profile details with repos */}
-          {profile && showDetails && (
-            <div className="profile-details-wrapper">
-              <button
-                className="back-link"
-                onClick={() => setShowDetails(false)}
-                style={{ marginBottom: '20px', cursor: 'pointer', background: 'none', border: 'none', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '5px' }}
-              >
-                ← Back to results
+          <div className="search-section">
+            <form onSubmit={handleSearch} className="search-form">
+              <input
+                type="text"
+                placeholder="Enter GitHub username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="search-input"
+              />
+              <button type="submit" className="search-btn" disabled={loading}>
+                {loading ? 'Searching...' : 'Search'}
               </button>
+            </form>
 
-              <div className="profile-info">
-                <div className="profile-header">
-                  <img src={profile.avatar_url} alt={profile.login} className="profile-avatar" />
-                  <div className="profile-details">
-                    <h2>{profile.name || profile.login}</h2>
-                    <p className="profile-handle">@{profile.login}</p>
-                    {profile.bio && <p className="profile-bio">{profile.bio}</p>}
-                    <div className="profile-stats">
-                      <div><span className="stat-value">{profile.public_repos}</span> Repositories</div>
-                      <div><span className="stat-value">{profile.followers}</span> Followers</div>
-                      <div><span className="stat-value">{profile.following}</span> Following</div>
-                    </div>
-                  </div>
-                  <div className="action-buttons" style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignSelf: 'flex-start' }}>
-                    <a href={profile.html_url} target="_blank" rel="noopener noreferrer" className="popular-button" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      GitHub
-                    </a>
-                    <button onClick={addToShortlist} className="popular-button" style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none' }}>
-                      + Shortlist
-                    </button>
-                  </div>
+            {recentSearches.length > 0 && (
+              <div className="recent-searches">
+                <div className="recent-header">
+                  <span>Recent Searches:</span>
+                  <button className="clear-all-btn" onClick={clearAllRecentSearches}>Clear All</button>
                 </div>
+                <div className="recent-list">
+                  {recentSearches.map((search, index) => (
+                    <button
+                      key={index}
+                      className="recent-item"
+                      onClick={() => setUsername(search)}
+                    >
+                      {search}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-                <div className="profile-details-grid">
-                  <div><strong>Location</strong><p>{profile.location || 'N/A'}</p></div>
-                  <div><strong>Company</strong><p>{profile.company || 'N/A'}</p></div>
-                  <div><strong>Joined</strong><p>{new Date(profile.created_at).toLocaleDateString()}</p></div>
+          {error && <div className="error-message">{error}</div>}
+
+          {userData && (
+            <div className="user-profile">
+              <div className="profile-header">
+                <img src={userData.avatar_url} alt={userData.login} className="avatar" />
+                <div className="profile-info">
+                  <h2>{userData.name || userData.login}</h2>
+                  <p>@{userData.login}</p>
+                  {userData.bio && <p className="bio">{userData.bio}</p>}
+                  <div className="contact-info">
+                    {userData.email && (
+                      <div className="contact-item">
+                        <span>Email: {userData.email}</span>
+                      </div>
+                    )}
+                    {userData.blog && (
+                      <div className="contact-item">
+                        <span>Portfolio: <a href={userData.blog} target="_blank" rel="noopener noreferrer">{userData.blog}</a></span>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    className={`shortlist-dev-btn ${shortlistedDevs.some(d => d.login === userData.login) ? 'shortlisted' : ''}`}
+                    onClick={() => handleShortlistDev(userData)}
+                  >
+                    {shortlistedDevs.some(d => d.login === userData.login) ? 'Remove from Shortlist' : 'Shortlist Developer'}
+                  </button>
+
+                  {showReview === userData.login && (
+                    <div className="review-section">
+                      <h3>Review Developer</h3>
+                      <div className="review-field">
+                        <label>Role:</label>
+                        <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
+                          <option value="">Select a role</option>
+                          {roleOptions.map(role => (
+                            <option key={role} value={role}>{role}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="review-field">
+                        <label>Frontend Features:</label>
+                        <div className="frontend-skills">
+                          {frontendSkills.map(skill => (
+                            <button
+                              key={skill}
+                              className={`skill-btn ${selectedFrontendFeatures.includes(skill) ? 'selected' : ''}`}
+                              onClick={() => toggleFrontendFeature(skill)}
+                            >
+                              {skill}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="review-field">
+                        <label>Message:</label>
+                        <textarea
+                          value={reviewMessage}
+                          onChange={(e) => setReviewMessage(e.target.value)}
+                          placeholder="Add a message about this developer..."
+                          rows={3}
+                        />
+                      </div>
+                      <div className="review-actions">
+                        <button className="confirm-btn" onClick={() => confirmShortlistDev(userData)}>Confirm</button>
+                        <button className="cancel-btn" onClick={() => setShowReview(null)}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Repositories Section */}
               <div className="repos-section">
-                <div className="repos-section-header">
-                  <h3>Repositories</h3>
-                  <span className="repos-shortlisted-badge">
-                    {shortlistedRepos.filter(r => r.ownerLogin === profile.login).length} shortlisted
-                  </span>
+                <div className="repos-header">
+                  <h3>Repositories ({repos.length})</h3>
                 </div>
+                <div className="repos-list">
+                  {repos.map(repo => (
+                    <div key={repo.id} className="repo-card">
+                      <div className="repo-header">
+                        <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="repo-name">
+                          {repo.name}
+                        </a>
+                        {shortlistedRepos.some(r => r.id === repo.id) && <span className="repo-shortlisted-badge">Shortlisted</span>}
+                      </div>
+                      {repo.description && <p className="repo-desc">{repo.description}</p>}
+                      <div className="repo-meta">
+                        {repo.language && <span className="repo-lang">{repo.language}</span>}
+                        <span>⭐ {repo.stargazers_count}</span>
+                        <span>🍴 {repo.forks_count}</span>
+                      </div>
+                      <button
+                        className={`shortlist-repo-btn ${shortlistedRepos.some(r => r.id === repo.id) ? 'shortlisted' : ''}`}
+                        onClick={() => handleShortlistRepo(repo)}
+                      >
+                        {shortlistedRepos.some(r => r.id === repo.id) ? 'Remove' : 'Shortlist Repo'}
+                      </button>
 
-                {reposLoading ? (
-                  <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>Loading repositories...</div>
-                ) : (
-                  <div className="repos-grid">
-                    {repos.map((repo) => {
-                      const isShortlisted = isRepoShortlisted(repo.id);
-                      return (
-                        <div key={repo.id} className={`repo-card ${isShortlisted ? 'repo-card--shortlisted' : ''}`}>
-                          <div className="repo-card-top">
-                            <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="repo-name">
-                              {repo.name}
-                            </a>
-                            <button
-                              className={`repo-shortlist-btn ${isShortlisted ? 'active' : ''}`}
-                              onClick={() => toggleRepoShortlist(repo)}
-                              title={isShortlisted ? 'Remove from shortlist' : 'Add to shortlist'}
-                            >
-                              {isShortlisted ? '★ Shortlisted' : '☆ Shortlist'}
-                            </button>
-                          </div>
-                          {repo.description && (
-                            <p className="repo-description">{repo.description}</p>
-                          )}
-                          <div className="repo-meta">
-                            {repo.language && (
-                              <span className="repo-lang">
-                                <span className="lang-dot" />
-                                {repo.language}
-                              </span>
-                            )}
-                            <span className="repo-stat">⭐ {repo.stargazers_count}</span>
-                            <span className="repo-stat">🍴 {repo.forks_count}</span>
-                            {repo.license && <span className="repo-stat">📄 {repo.license.spdx_id}</span>}
+                      {showRepoLabel === repo.id && (
+                        <div className="repo-label-section">
+                          <input
+                            type="text"
+                            placeholder="Enter label (e.g., React Project, Portfolio)"
+                            value={repoLabelText}
+                            onChange={(e) => setRepoLabelText(e.target.value)}
+                            className="repo-label-input"
+                          />
+                          <div className="repo-label-actions">
+                            <button className="confirm-btn" onClick={() => confirmRepoLabel(repo)}>Confirm</button>
+                            <button className="cancel-btn" onClick={() => setShowRepoLabel(null)}>Cancel</button>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Popular developers section */}
-          {!profile && !showDetails && (
-            <div className="popular-developers-section" style={{ marginTop: '40px' }}>
-              <div className="section-heading"><h2>POPULAR DEVELOPERS</h2></div>
-              <div className="popular-developers-grid">
-                {[
-                  { username: 'octocat', avatar: 'https://github.com/octocat.png' },
-                  { username: 'torvalds', avatar: 'https://github.com/torvalds.png' },
-                  { username: 'gaearon', avatar: 'https://github.com/gaearon.png' },
-                  { username: 'yyx990803', avatar: 'https://github.com/yyx990803.png' },
-                ].map((dev) => (
-                  <div key={dev.username} className="popular-developer-card">
-                    <img src={dev.avatar} alt={dev.username} className="popular-avatar" />
-                    <div className="popular-details">
-                      <span className="popular-username">{dev.username}</span>
-                      <a href={`https://github.com/${dev.username}`} target="_blank" rel="noopener noreferrer" className="popular-link" style={{ textDecoration: 'none', color: '#2563eb', fontSize: '0.85rem' }}>
-                        GitHub profile
-                      </a>
+                      )}
                     </div>
-                    <button type="button" className="popular-button" onClick={() => handleSearch(dev.username)}>
-                      View Details
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}

@@ -1,18 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import './Dashboard.css'
-import './Shorlist.css'
+import './Shortlist.css'
 
 function Shortlist({ onSignOut, onNavigate }) {
   const [collapsed, setCollapsed] = useState(false)
   const [shortlistedDevs, setShortlistedDevs] = useState([])
   const [shortlistedRepos, setShortlistedRepos] = useState([])
   const [activeTab, setActiveTab] = useState('developers')
+  const [filterRole, setFilterRole] = useState('All')
+  const [uniqueRoles, setUniqueRoles] = useState([])
+  const [expandedContacts, setExpandedContacts] = useState({})
 
   useEffect(() => {
     const devData = JSON.parse(localStorage.getItem('devShortlist') || '[]')
     setShortlistedDevs(devData)
     const repoData = JSON.parse(localStorage.getItem('shortlistedRepos') || '[]')
     setShortlistedRepos(repoData)
+
+    const roles = new Set()
+    devData.forEach(dev => {
+      if (dev.role) roles.add(dev.role)
+    })
+    setUniqueRoles(['All', ...Array.from(roles)])
   }, [])
 
   const handleRemoveDev = (id) => {
@@ -25,6 +34,10 @@ function Shortlist({ onSignOut, onNavigate }) {
     const updatedList = shortlistedRepos.filter(repo => repo.id !== id)
     setShortlistedRepos(updatedList)
     localStorage.setItem('shortlistedRepos', JSON.stringify(updatedList))
+  }
+
+  const toggleContact = (devId) => {
+    setExpandedContacts(prev => ({ ...prev, [devId]: !prev[devId] }))
   }
 
   return (
@@ -74,7 +87,6 @@ function Shortlist({ onSignOut, onNavigate }) {
             <p>Your shortlisted developers and repositories.</p>
           </div>
 
-          {/* Tabs */}
           <div className="shortlist-tabs">
             <button
               className={`shortlist-tab ${activeTab === 'developers' ? 'active' : ''}`}
@@ -92,25 +104,88 @@ function Shortlist({ onSignOut, onNavigate }) {
             </button>
           </div>
 
+          {activeTab === 'developers' && (
+            <div className="filter-container">
+              <span className="filter-label">Filter by Profession:</span>
+              <select
+                className="filter-select"
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+              >
+                {uniqueRoles.map(role => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {activeTab === 'repos' && (
+            <div className="filter-container">
+              <span className="filter-label">Filter by Profession:</span>
+              <select
+                className="filter-select"
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+              >
+                {uniqueRoles.map(role => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="shortlist-content">
-            {/* Developers Tab */}
             {activeTab === 'developers' && (
               shortlistedDevs.length > 0 ? (
-                <div className="popular-developers-grid">
-                  {shortlistedDevs.map((dev) => (
-                    <div key={dev.id} className="popular-developer-card">
-                      <img src={dev.avatar_url} alt={dev.login} className="popular-avatar" />
-                      <div className="popular-details">
-                        <span className="popular-username">{dev.name || dev.login}</span>
-                        <a href={dev.html_url} target="_blank" rel="noopener noreferrer" className="popular-link">
+                <div className="shortlist-grid">
+                  {shortlistedDevs
+                    .filter(dev => {
+                      if (filterRole === 'All') return true;
+                      return dev.role === filterRole;
+                    })
+                    .map((dev) => (
+                    <div key={dev.id} className="shortlist-card">
+                      <img src={dev.avatar_url} alt={dev.login} className="card-avatar" />
+                      <div className="card-details">
+                        <span className="card-username">{dev.name || dev.login}</span>
+                        <a href={dev.html_url} target="_blank" rel="noopener noreferrer" className="card-link">
                           @{dev.login}
                         </a>
+                        {dev.role && <span className="role-tag">{dev.role}</span>}
+                        {dev.message && <p className="dev-message">{dev.message}</p>}
+                        {dev.frontendFeatures && dev.frontendFeatures.length > 0 && (
+                          <div className="feature-tags-container">
+                            {dev.frontendFeatures.map(skill => (
+                              <span key={skill} className="feature-tag">{skill}</span>
+                            ))}
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => toggleContact(dev.id)}
+                          className="contact-toggle"
+                        >
+                          {expandedContacts[dev.id] ? 'Hide Contact ▲' : '📞 Contact ▼'}
+                        </button>
+
+                        {expandedContacts[dev.id] && (
+                          <div className="contact-info">
+                            {dev.email && (
+                              <a href={`mailto:${dev.email}`} className="contact-item">📧 {dev.email}</a>
+                            )}
+                            {dev.blog && (
+                              <a href={dev.blog.startsWith('http') ? dev.blog : `https://${dev.blog}`}
+                                 target="_blank" rel="noopener noreferrer" className="contact-item">
+                                🌐 {dev.blog}
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <button
                         type="button"
-                        className="popular-button"
+                        className="remove-btn"
                         onClick={() => handleRemoveDev(dev.id)}
-                        style={{ color: '#dc2626', borderColor: '#fecaca' }}
                       >
                         Remove
                       </button>
@@ -118,11 +193,11 @@ function Shortlist({ onSignOut, onNavigate }) {
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                <div className="empty-state">
                   <p>No shortlisted developers yet. Go to Developers page to add candidates.</p>
                   <button
                     onClick={() => onNavigate('developers')}
-                    style={{ marginTop: '15px', padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                    className="empty-state-btn"
                   >
                     Find Developers
                   </button>
@@ -130,20 +205,29 @@ function Shortlist({ onSignOut, onNavigate }) {
               )
             )}
 
-            {/* Repos Tab */}
             {activeTab === 'repos' && (
               shortlistedRepos.length > 0 ? (
                 <div className="shortlisted-repos-list">
-                  {shortlistedRepos.map((repo) => (
+                  {shortlistedRepos
+                    .filter(repo => {
+                      if (filterRole === 'All') return true;
+                      const devShortlist = JSON.parse(localStorage.getItem('devShortlist') || '[]');
+                      const owner = devShortlist.find(dev => dev.login === repo.ownerLogin);
+                      return owner && owner.role === filterRole;
+                    })
+                    .map((repo) => (
                     <div key={repo.id} className="shortlisted-repo-card">
                       <div className="shortlisted-repo-owner">
                         <img src={repo.ownerAvatar} alt={repo.ownerLogin} className="repo-owner-avatar" />
                         <span className="repo-owner-name">{repo.ownerLogin}</span>
                       </div>
                       <div className="shortlisted-repo-info">
-                        <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="shortlisted-repo-name">
-                          {repo.name}
-                        </a>
+                        <div className="repo-name-wrapper">
+                          <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="shortlisted-repo-name">
+                            {repo.name}
+                          </a>
+                          {repo.label && <span className="repo-label-tag">{repo.label}</span>}
+                        </div>
                         {repo.description && <p className="shortlisted-repo-desc">{repo.description}</p>}
                         <div className="repo-meta">
                           {repo.language && (
@@ -158,9 +242,8 @@ function Shortlist({ onSignOut, onNavigate }) {
                       </div>
                       <button
                         type="button"
-                        className="popular-button"
+                        className="remove-btn"
                         onClick={() => handleRemoveRepo(repo.id)}
-                        style={{ color: '#dc2626', borderColor: '#fecaca', alignSelf: 'flex-start', flexShrink: 0 }}
                       >
                         Remove
                       </button>
@@ -168,11 +251,11 @@ function Shortlist({ onSignOut, onNavigate }) {
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                <div className="empty-state">
                   <p>No shortlisted repositories yet. View a developer's profile and shortlist their repos.</p>
                   <button
                     onClick={() => onNavigate('developers')}
-                    style={{ marginTop: '15px', padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                    className="empty-state-btn"
                   >
                     Browse Developers
                   </button>
