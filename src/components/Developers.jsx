@@ -134,6 +134,33 @@ function Developers({ onSignOut, onNavigate }) {
     fetchPopular();
   }, []);
 
+  const fetchEmailFromCommits = async (username, repos) => {
+    const reposToCheck = repos
+      .filter(r => !r.fork)
+      .sort((a, b) => b.stargazers_count - a.stargazers_count)
+      .slice(0, 3);
+
+    for (const repo of reposToCheck) {
+      try {
+        const commitsRes = await fetch(
+          `https://api.github.com/repos/${username}/${repo.name}/commits?per_page=10`
+        );
+        if (!commitsRes.ok) continue;
+
+        const commits = await commitsRes.json();
+        for (const commit of commits) {
+          const email = commit.commit?.author?.email;
+          if (email && !email.includes("users.noreply.github.com")) {
+            return email;
+          }
+        }
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  };
+
   const performSearch = async (searchTerm) => {
     const term = searchTerm || username;
     if (!term?.trim()) return;
@@ -158,7 +185,15 @@ function Developers({ onSignOut, onNavigate }) {
       );
       const reposData = await reposRes.json();
 
-      setUserData(userData);
+      let finalUserData = { ...userData };
+      if (!userData.email && reposData.length > 0) {
+        const emailFromCommits = await fetchEmailFromCommits(term, reposData);
+        if (emailFromCommits) {
+          finalUserData.email = emailFromCommits;
+        }
+      }
+
+      setUserData(finalUserData);
       setRepos(reposData);
 
       if (!recentSearches.includes(term)) {
@@ -343,14 +378,6 @@ function Developers({ onSignOut, onNavigate }) {
                   <p>@{userData.login}</p>
                   {userData.bio && <p className="bio">{userData.bio}</p>}
                   <div className="contact-info">
-                    {userData.email && (
-                      <a
-                        href={`mailto:${userData.email}`}
-                        className="contact-item"
-                      >
-                        📧 {userData.email}
-                      </a>
-                    )}
                     {userData.blog && (
                       <a
                         href={
@@ -361,8 +388,18 @@ function Developers({ onSignOut, onNavigate }) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="contact-item"
+                        title={userData.blog}
                       >
-                        🌐 {userData.blog}
+                        🌐 <span className="contact-text">{userData.blog}</span>
+                      </a>
+                    )}
+                    {userData.email && (
+                      <a
+                        href={`mailto:${userData.email}`}
+                        className="contact-item"
+                        title={userData.email}
+                      >
+                        📧 <span className="contact-text">{userData.email}</span>
                       </a>
                     )}
                   </div>

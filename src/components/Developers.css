@@ -192,20 +192,36 @@
   background: #f8fafc;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .contact-item {
   font-size: 0.9rem;
   color: #475569;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .contact-item a {
   color: #2563eb;
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .contact-item a:hover {
   text-decoration: underline;
+}
+
+.contact-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .shortlist-dev-btn {

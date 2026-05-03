@@ -140,13 +140,17 @@ function Shortlist({ onSignOut, onNavigate }) {
 
                         {expandedContacts[dev.id] && (
                           <div className="contact-info">
-                            {dev.email && (
-                              <a href={`mailto:${dev.email}`} className="contact-item">📧 {dev.email}</a>
-                            )}
                             {dev.blog && (
                               <a href={dev.blog.startsWith('http') ? dev.blog : `https://${dev.blog}`}
-                                 target="_blank" rel="noopener noreferrer" className="contact-item">
-                                🌐 {dev.blog}
+                                 target="_blank" rel="noopener noreferrer" className="contact-item"
+                                 title={dev.blog}>
+                                🌐 <span className="contact-text">{dev.blog}</span>
+                              </a>
+                            )}
+                            {dev.email && (
+                              <a href={`mailto:${dev.email}`} className="contact-item"
+                                 title={dev.email}>
+                                📧 <span className="contact-text">{dev.email}</span>
                               </a>
                             )}
                           </div>
