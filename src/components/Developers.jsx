@@ -445,64 +445,96 @@ function Developers({ onSignOut, onNavigate }) {
           )}
 
           {userData && (
-            <div className="user-strip">
-              <img
-                src={userData.avatar_url}
-                alt={userData.login}
-                className="user-strip-avatar"
-              />
-              <div className="user-strip-info">
-                <h3>{userData.name || userData.login}</h3>
-                <span>@{userData.login}</span>
+            <>
+              <div className="back-to-search-wrapper">
+                <button
+                  className="back-to-search-btn"
+                  onClick={() => {
+                    setUserData(null);
+                    setRepos([]);
+                    setSocialAccounts([]);
+                  }}
+                >
+                  ← Back to Search
+                </button>
               </div>
-              <div className="user-strip-contact">
-                {socialLinks.website && (
-                  <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Website">
-                    <FaGlobe />
-                  </a>
-                )}
-                {userData.email && (
-                  <a href={`mailto:${userData.email}`} className="strip-icon" title={userData.email}>
-                    <FaEnvelope />
-                  </a>
-                )}
-                {socialLinks.linkedin && (
-                  <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="strip-icon" title="LinkedIn">
-                    <FaLinkedin />
-                  </a>
-                )}
-                {socialLinks.twitter && (
-                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Twitter">
-                    <FaTwitter />
-                  </a>
-                )}
-                {socialLinks.facebook && (
-                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Facebook">
-                    <FaFacebook />
-                  </a>
-                )}
-                {socialLinks.instagram && (
-                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="strip-icon" title="Instagram">
-                    <FaInstagram />
-                  </a>
-                )}
-                {socialLinks.github && (
-                  <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="strip-icon" title="GitHub">
-                    <FaGithub />
-                  </a>
-                )}
+              <div className="user-strip">
+                <div className="user-strip-avatar-col">
+                  <img
+                    src={userData.avatar_url}
+                    alt={userData.login}
+                    className="user-strip-avatar"
+                  />
+                  <h3 className="user-strip-name">{userData.name || userData.login}</h3>
+                  <span className="user-strip-login">@{userData.login}</span>
+                </div>
+                <div className="user-strip-middle">
+                  {userData.bio && <p className="user-strip-bio">{userData.bio}</p>}
+                  <div className="user-strip-contact">
+                    {socialLinks.website && (
+                      <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <FaGlobe className="contact-icon" />
+                        <span className="contact-text">{(() => { try { return new URL(socialLinks.website).hostname.replace(/^www\./, ''); } catch { return socialLinks.website; } })()}</span>
+                      </a>
+                    )}
+                    {userData.email && (
+                      <a href={`mailto:${userData.email}`} className="contact-item">
+                        <FaEnvelope className="contact-icon" />
+                        <span className="contact-text">{userData.email}</span>
+                      </a>
+                    )}
+                    {socialLinks.linkedin && (
+                      <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <FaLinkedin className="contact-icon" />
+                        <span className="contact-text">{(() => { try { const u = new URL(socialLinks.linkedin); return u.hostname.replace(/^www\./, '') + u.pathname; } catch { return 'LinkedIn'; } })()}</span>
+                      </a>
+                    )}
+                    {socialLinks.twitter && (
+                      <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <FaTwitter className="contact-icon" />
+                        <span className="contact-text">{socialLinks.twitter.replace(/https?:\/\/(www\.)?(x\.com|twitter\.com)\//i, '@')}</span>
+                      </a>
+                    )}
+                    {socialLinks.facebook && (
+                      <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <FaFacebook className="contact-icon" />
+                        <span className="contact-text">{(() => { try { const u = new URL(socialLinks.facebook); return u.hostname.replace(/^www\./, '') + u.pathname; } catch { return 'Facebook'; } })()}</span>
+                      </a>
+                    )}
+                    {socialLinks.instagram && (
+                      <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <FaInstagram className="contact-icon" />
+                        <span className="contact-text">{(() => { try { const u = new URL(socialLinks.instagram); return u.hostname.replace(/^www\./, '') + u.pathname; } catch { return 'Instagram'; } })()}</span>
+                      </a>
+                    )}
+                    {socialLinks.github && (
+                      <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="contact-item">
+                        <FaGithub className="contact-icon" />
+                        <span className="contact-text">{socialLinks.github.replace(/https?:\/\/github\.com\//i, '@')}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <a
+                  href={userData.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="view-profile-btn"
+                >
+                  View Profile
+                </a>
+                <div className="user-strip-actions">
+                  <button
+                    className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
+                    onClick={() => handleShortlistDev(userData)}
+                  >
+                    {shortlistedDevs.some((d) => d.login === userData.login)
+                      ? "Remove from Shortlist"
+                      : "Shortlist Developer"}
+                  </button>
+                </div>
               </div>
-              <button
-                className="back-to-search-btn"
-                onClick={() => {
-                  setUserData(null);
-                  setRepos([]);
-                  setSocialAccounts([]);
-                }}
-              >
-                ← Back to Search
-              </button>
-            </div>
+            </>
           )}
 
           {!userData && (
@@ -615,17 +647,6 @@ function Developers({ onSignOut, onNavigate }) {
 
           {userData && (
             <div>
-              <div className="user-actions">
-                <button
-                  className={`shortlist-dev-btn ${shortlistedDevs.some((d) => d.login === userData.login) ? "shortlisted" : ""}`}
-                  onClick={() => handleShortlistDev(userData)}
-                >
-                  {shortlistedDevs.some((d) => d.login === userData.login)
-                    ? "Remove from Shortlist"
-                    : "Shortlist Developer"}
-                </button>
-              </div>
-
               {showReview === userData.login && (
                 <div className="review-modal-overlay" onClick={() => setShowReview(null)}>
                   <div className="review-modal" onClick={(e) => e.stopPropagation()}>
