@@ -1,0 +1,57 @@
+          {error && <div className="error-message">{error}</div>}
+
+          {userData && (() => {
+            const linkedInMatch = userData.bio && userData.bio.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i);
+            const linkedInUrl = linkedInMatch
+              ? (linkedInMatch[0].startsWith('http') ? linkedInMatch[0] : 'https://' + linkedInMatch[0])
+              : null;
+
+            return (
+            <div className="user-profile">
+              <div className="profile-header">
+                <img
+                  src={userData.avatar_url}
+                  alt={userData.login}
+                  className="avatar"
+                />
+                <div className="profile-info">
+                  <h2>{userData.name || userData.login}</h2>
+                  <p>@{userData.login}</p>
+                  {userData.bio && <p className="bio">{userData.bio}</p>}
+                  <h4 className="contact-info-title">Contact Info</h4>
+                  <div className="contact-info">
+                    {userData.blog && (
+                      <a
+                        href={
+                          userData.blog.startsWith("http")
+                            ? userData.blog
+                            : `https://${userData.blog}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="contact-item"
+                        title={userData.blog}
+                      >
+                        🌐 <span className="contact-text">{userData.blog}</span>
+                      </a>
+                    )}
+                    {userData.email && (
+                      <a
+                        href={`mailto:${userData.email}`}
+                        className="contact-item"
+                        title={userData.email}
+                      >
+                        📧 <span className="contact-text">{userData.email}</span>
+                      </a>
+                    )}
+                    {linkedInUrl && (
+                      <a
+                        href={linkedInUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="contact-item"
+                      >
+                        💼 <span className="contact-text">LinkedIn</span>
+                      </a>
+                    )}
+                  </div>

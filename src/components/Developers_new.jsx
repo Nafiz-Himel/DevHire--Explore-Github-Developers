@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import "./Dashboard.css";
 import "./Developers.css";
@@ -103,22 +103,6 @@ function Developers({ onSignOut, onNavigate }) {
   const [showRepoLabel, setShowRepoLabel] = useState(null);
   const [repoLabelText, setRepoLabelText] = useState("");
   const [popularDevs, setPopularDevs] = useState([]);
-
-  // Clean URL for display
-  const cleanUrl = (url) => {
-    if (!url) return '';
-    return url.replace(/^https?:\/\//, '');
-  };
-
-  // Extract LinkedIn URL from bio
-  const linkedInUrl = useMemo(() => {
-    if (!userData?.bio) return null;
-    const match = userData.bio.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i);
-    if (!match) return null;
-    let url = match[0];
-    if (!url.startsWith('http')) url = 'https://' + url;
-    return url;
-  }, [userData]);
 
   useEffect(() => {
     localStorage.setItem("devShortlist", JSON.stringify(shortlistedDevs));
@@ -521,7 +505,13 @@ function Developers({ onSignOut, onNavigate }) {
 
           {error && <div className="error-message">{error}</div>}
 
-          {userData && (
+          {userData && (() => {
+            const linkedInMatch = userData.bio && userData.bio.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i);
+            const linkedInUrl = linkedInMatch
+              ? (linkedInMatch[0].startsWith('http') ? linkedInMatch[0] : 'https://' + linkedInMatch[0])
+              : null;
+
+            return (
             <div className="user-profile">
               <div className="profile-header">
                 <img
@@ -559,25 +549,14 @@ function Developers({ onSignOut, onNavigate }) {
                         <span role="img" aria-label="email">📧</span> <span className="contact-text">{userData.email}</span>
                       </a>
                     )}
-                     {linkedInUrl && (
-                       <a
-                         href={linkedInUrl}
-                         target="_blank"
-                         rel="noopener noreferrer"
-                         className="contact-item"
-                         title={linkedInUrl}
-                       >
-                         <span role="img" aria-label="linkedin">📎</span> <span className="contact-text">{cleanUrl(linkedInUrl)}</span>
-                       </a>
-                     )}
-                    {userData.twitter_username && (
+                    {linkedInUrl && (
                       <a
-                        href={`https://twitter.com/${userData.twitter_username}`}
+                        href={linkedInUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="contact-item"
                       >
-                        <span role="img" aria-label="twitter">🐦</span> <span className="contact-text">@{userData.twitter_username}</span>
+                        <span role="img" aria-label="linkedin">💼</span> <span className="contact-text">LinkedIn</span>
                       </a>
                     )}
                   </div>
@@ -609,6 +588,19 @@ function Developers({ onSignOut, onNavigate }) {
                       <div className="detail-item">
                         <span className="detail-icon">📍</span>
                         <span>{userData.location}</span>
+                      </div>
+                    )}
+                    {userData.twitter_username && (
+                      <div className="detail-item">
+                        <span className="detail-icon">🐦</span>
+                        <a
+                          href={`https://twitter.com/${userData.twitter_username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="detail-link"
+                        >
+                          @{userData.twitter_username}
+                        </a>
                       </div>
                     )}
                     <div className="detail-item">
@@ -756,79 +748,82 @@ function Developers({ onSignOut, onNavigate }) {
                   )}
                 </div>
               </div>
+            );
+          })()}
+
+              <div className="repos-section">
+                <div className="repos-header">
+                  <h3>Repositories ({repos.length})</h3>
+                </div>
+                <div className="repos-list">
+                  {repos.map((repo) => (
+                    <div key={repo.id} className="repo-card">
+                      <div className="repo-header">
+                        <a
+                          href={repo.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="repo-name"
+                        >
+                          {repo.name}
+                        </a>
+                        {shortlistedRepos.some((r) => r.id === repo.id) && (
+                          <span className="repo-shortlisted-badge">
+                            Shortlisted
+                          </span>
+                        )}
+                      </div>
+                      {repo.description && (
+                        <p className="repo-desc">{repo.description}</p>
+                      )}
+                      <div className="repo-meta">
+                        {repo.language && (
+                          <span className="repo-lang">{repo.language}</span>
+                        )}
+                        <span>⭐ {repo.stargazers_count}</span>
+                        <span>🍴 {repo.forks_count}</span>
+                      </div>
+                      <button
+                        className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
+                        onClick={() => handleShortlistRepo(repo)}
+                      >
+                        {shortlistedRepos.some((r) => r.id === repo.id)
+                          ? "Remove"
+                          : "Shortlist Repo"}
+                      </button>
+
+                      {showRepoLabel === repo.id && (
+                        <div className="repo-label-section">
+                          <input
+                            type="text"
+                            placeholder="Enter label (e.g., React Project, Portfolio)"
+                            value={repoLabelText}
+                            onChange={(e) => setRepoLabelText(e.target.value)}
+                            className="repo-label-input"
+                          />
+                          <div className="repo-label-actions">
+                            <button
+                              className="confirm-btn"
+                              onClick={() => confirmRepoLabel(repo)}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="cancel-btn"
+                              onClick={() => setShowRepoLabel(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="repos-section">
-            <div className="repos-header">
-              <h3>Repositories ({repos.length})</h3>
-            </div>
-            <div className="repos-list">
-              {repos.map((repo) => (
-                <div key={repo.id} className="repo-card">
-                  <div className="repo-header">
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="repo-name"
-                    >
-                      {repo.name}
-                    </a>
-                    {shortlistedRepos.some((r) => r.id === repo.id) && (
-                      <span className="repo-shortlisted-badge">
-                        Shortlisted
-                      </span>
-                    )}
-                  </div>
-                  {repo.description && (
-                    <p className="repo-desc">{repo.description}</p>
-                  )}
-                  <div className="repo-meta">
-                    {repo.language && (
-                      <span className="repo-lang">{repo.language}</span>
-                    )}
-                    <span>⭐ {repo.stargazers_count}</span>
-                    <span>🍴 {repo.forks_count}</span>
-                  </div>
-                  <div className="repo-actions">
-                    <button
-                      className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
-                      onClick={() => handleShortlistRepo(repo)}
-                    >
-                      {shortlistedRepos.some((r) => r.id === repo.id)
-                        ? "Remove"
-                        : "Shortlist Repo"}
-                    </button>
-
-                    {showRepoLabel === repo.id && (
-                      <div className="repo-label-inline">
-                        <input
-                          type="text"
-                          placeholder="Enter label..."
-                          value={repoLabelText}
-                          onChange={(e) => setRepoLabelText(e.target.value)}
-                          className="repo-label-input"
-                        />
-                        <button
-                          className="confirm-btn"
-                          onClick={() => confirmRepoLabel(repo)}
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="cancel-btn"
-                          onClick={() => setShowRepoLabel(null)}
-                        >
-                          ✗
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </Sidebar>
