@@ -790,9 +790,6 @@ function Developers({ onSignOut, onNavigate }) {
                           <span className="repo-shortlisted-badge">Shortlisted</span>
                         )}
                       </div>
-                      {repo.description && (
-                        <p className="repo-desc">{repo.description}</p>
-                      )}
                       <div className="repo-meta">
                         {repo.language && (
                           <span className="repo-lang">{repo.language}</span>
@@ -800,6 +797,9 @@ function Developers({ onSignOut, onNavigate }) {
                         <span>⭐ {repo.stargazers_count}</span>
                         <span>🍴 {repo.forks_count}</span>
                       </div>
+                      {repo.description && (
+                        <p className="repo-desc">{repo.description}</p>
+                      )}
                       <button
                         className={`shortlist-repo-btn ${shortlistedRepos.some((r) => r.id === repo.id) ? "shortlisted" : ""}`}
                         onClick={() => handleShortlistRepo(repo)}
