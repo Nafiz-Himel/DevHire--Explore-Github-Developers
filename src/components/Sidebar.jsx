@@ -53,6 +53,20 @@ function Sidebar({ currentPage, onNavigate, onSignOut, children }) {
 
   return (
     <div className={`dashboard-shell ${collapsed ? 'collapsed' : ''}`}>
+      <nav className="mobile-tab-bar">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`mobile-tab-item ${currentPage === item.id ? 'active' : ''}`}
+            onClick={() => handleNavigate(item.id)}
+          >
+            <span className="mobile-tab-icon">{item.icon}</span>
+            <span className="mobile-tab-label">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo-mark">DH</div>
@@ -68,7 +82,7 @@ function Sidebar({ currentPage, onNavigate, onSignOut, children }) {
               onClick={() => handleNavigate(item.id)}
             >
               <span className="sidebar-nav-icon">{item.icon}</span>
-              {!collapsed && <span className="sidebar-nav-label">{item.label}</span>}
+              <span className="sidebar-nav-label">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -85,7 +99,7 @@ function Sidebar({ currentPage, onNavigate, onSignOut, children }) {
             <span className="sidebar-nav-icon">
               {collapsed ? icons.chevronRight : icons.chevronLeft}
             </span>
-            {!collapsed && <span className="sidebar-nav-label">Collapse</span>}
+            <span className="sidebar-nav-label">Collapse</span>
           </button>
           <button
             type="button"
@@ -94,7 +108,7 @@ function Sidebar({ currentPage, onNavigate, onSignOut, children }) {
             title="Logout"
           >
             <span className="sidebar-nav-icon">{icons.logOut}</span>
-            {!collapsed && <span className="sidebar-nav-label">Logout</span>}
+            <span className="sidebar-nav-label">Logout</span>
           </button>
         </div>
       </aside>
