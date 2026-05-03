@@ -10,8 +10,6 @@ const roleOptions = [
   'Mobile Developer'
 ];
 
-const frontendSkills = ['React', 'TypeScript', 'Vue.js', 'Angular', 'HTML5', 'CSS3', 'Tailwind CSS', 'Next.js'];
-
 function Developers({ onSignOut, onNavigate }) {
   const [collapsed, setCollapsed] = useState(false);
   const [username, setUsername] = useState('');
@@ -34,9 +32,9 @@ function Developers({ onSignOut, onNavigate }) {
   const [showReview, setShowReview] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
   const [reviewMessage, setReviewMessage] = useState('');
-  const [selectedFrontendFeatures, setSelectedFrontendFeatures] = useState([]);
   const [showRepoLabel, setShowRepoLabel] = useState(null);
   const [repoLabelText, setRepoLabelText] = useState('');
+  const [popularDevs, setPopularDevs] = useState([]);
 
   useEffect(() => {
     localStorage.setItem('devShortlist', JSON.stringify(shortlistedDevs));
@@ -50,9 +48,24 @@ function Developers({ onSignOut, onNavigate }) {
     localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
   }, [recentSearches]);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!username.trim()) return;
+  useEffect(() => {
+    const popularUsernames = ['torvalds', 'gaearon', 'sindresorhus', 'addyosmani', 'tj', 'paulirish', 'mdo', 'fat'];
+    const fetchPopular = async () => {
+      try {
+        const results = await Promise.all(
+          popularUsernames.map(u => fetch(`https://api.github.com/users/${u}`).then(r => r.json()))
+        );
+        setPopularDevs(results.filter(dev => !dev.message));
+      } catch (err) {
+        console.error('Failed to fetch popular developers', err);
+      }
+    };
+    fetchPopular();
+  }, []);
+
+  const performSearch = async (searchTerm) => {
+    const term = searchTerm || username;
+    if (!term?.trim()) return;
 
     setLoading(true);
     setError('');
@@ -60,24 +73,29 @@ function Developers({ onSignOut, onNavigate }) {
     setRepos([]);
 
     try {
-      const userRes = await fetch(`https://api.github.com/users/${username}`);
+      const userRes = await fetch(`https://api.github.com/users/${term}`);
       if (!userRes.ok) throw new Error('User not found');
       const userData = await userRes.json();
 
-      const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
+      const reposRes = await fetch(`https://api.github.com/users/${term}/repos?per_page=100`);
       const reposData = await reposRes.json();
 
       setUserData(userData);
       setRepos(reposData);
 
-      if (!recentSearches.includes(username)) {
-        setRecentSearches(prev => [username, ...prev].slice(0, 10));
+      if (!recentSearches.includes(term)) {
+        setRecentSearches(prev => [term, ...prev].slice(0, 10));
       }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    await performSearch();
   };
 
   const handleShortlistDev = (dev) => {
@@ -88,7 +106,6 @@ function Developers({ onSignOut, onNavigate }) {
       setShowReview(dev.login);
       setSelectedRole('');
       setReviewMessage('');
-      setSelectedFrontendFeatures([]);
     }
   };
 
@@ -96,14 +113,12 @@ function Developers({ onSignOut, onNavigate }) {
     const devWithReview = {
       ...dev,
       role: selectedRole,
-      message: reviewMessage,
-      frontendFeatures: selectedFrontendFeatures
+      message: reviewMessage
     };
     setShortlistedDevs(prev => [...prev, devWithReview]);
     setShowReview(null);
     setSelectedRole('');
     setReviewMessage('');
-    setSelectedFrontendFeatures([]);
   };
 
   const handleShortlistRepo = (repo) => {
@@ -138,14 +153,6 @@ function Developers({ onSignOut, onNavigate }) {
 
   const clearAllRecentSearches = () => {
     setRecentSearches([]);
-  };
-
-  const toggleFrontendFeature = (skill) => {
-    if (selectedFrontendFeatures.includes(skill)) {
-      setSelectedFrontendFeatures(prev => prev.filter(s => s !== skill));
-    } else {
-      setSelectedFrontendFeatures(prev => [...prev, skill]);
-    }
   };
 
   return (
@@ -220,10 +227,35 @@ function Developers({ onSignOut, onNavigate }) {
                     <button
                       key={index}
                       className="recent-item"
-                      onClick={() => setUsername(search)}
+                      onClick={() => {
+                        setUsername(search);
+                        performSearch(search);
+                      }}
                     >
                       {search}
                     </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!userData && popularDevs.length > 0 && (
+              <div className="popular-profiles-section">
+                <h3 className="popular-profiles-heading">Popular Profiles</h3>
+                <p className="popular-profiles-subtext">Discover and explore these popular GitHub developers.</p>
+                <div className="popular-profiles-grid">
+                  {popularDevs.map(dev => (
+                    <div
+                      key={dev.id}
+                      className="popular-profile-card"
+                      onClick={() => performSearch(dev.login)}
+                    >
+                      <img src={dev.avatar_url} alt={dev.login} className="popular-profile-avatar" />
+                      <div className="popular-profile-info">
+                        <span className="popular-profile-name">{dev.name || dev.login}</span>
+                        <span className="popular-profile-username">@{dev.login}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -242,14 +274,13 @@ function Developers({ onSignOut, onNavigate }) {
                   {userData.bio && <p className="bio">{userData.bio}</p>}
                   <div className="contact-info">
                     {userData.email && (
-                      <div className="contact-item">
-                        <span>Email: {userData.email}</span>
-                      </div>
+                      <a href={`mailto:${userData.email}`} className="contact-item">📧 {userData.email}</a>
                     )}
                     {userData.blog && (
-                      <div className="contact-item">
-                        <span>Portfolio: <a href={userData.blog} target="_blank" rel="noopener noreferrer">{userData.blog}</a></span>
-                      </div>
+                      <a href={userData.blog.startsWith('http') ? userData.blog : `https://${userData.blog}`}
+                         target="_blank" rel="noopener noreferrer" className="contact-item">
+                        🌐 {userData.blog}
+                      </a>
                     )}
                   </div>
                   <button
@@ -270,20 +301,6 @@ function Developers({ onSignOut, onNavigate }) {
                             <option key={role} value={role}>{role}</option>
                           ))}
                         </select>
-                      </div>
-                      <div className="review-field">
-                        <label>Frontend Features:</label>
-                        <div className="frontend-skills">
-                          {frontendSkills.map(skill => (
-                            <button
-                              key={skill}
-                              className={`skill-btn ${selectedFrontendFeatures.includes(skill) ? 'selected' : ''}`}
-                              onClick={() => toggleFrontendFeature(skill)}
-                            >
-                              {skill}
-                            </button>
-                          ))}
-                        </div>
                       </div>
                       <div className="review-field">
                         <label>Message:</label>

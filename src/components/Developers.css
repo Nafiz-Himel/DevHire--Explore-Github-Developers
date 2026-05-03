@@ -272,33 +272,7 @@
   border-color: #2563eb;
 }
 
-.frontend-skills {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.skill-btn {
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.skill-btn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.skill-btn.selected {
-  background: #2563eb;
-  color: #ffffff;
-  border-color: #2563eb;
-}
+/* Frontend skills removed - no longer needed */
 
 .review-field textarea {
   width: 100%;
@@ -562,5 +536,90 @@
 
   .search-btn {
     width: 100%;
+  }
+}
+
+.popular-profiles-section {
+  margin-top: 24px;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.popular-profiles-heading {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.popular-profiles-subtext {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.popular-profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.popular-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.popular-profile-card:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.popular-profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+.popular-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.popular-profile-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popular-profile-username {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .popular-profiles-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
