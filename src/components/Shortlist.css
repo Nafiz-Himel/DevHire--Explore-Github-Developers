@@ -83,7 +83,7 @@
 
 .shortlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
@@ -186,13 +186,14 @@
   background: none;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 0.78rem;
+  padding: 8px 12px;
+  font-size: 0.8rem;
   color: #2563eb;
   cursor: pointer;
   margin-top: 8px;
   transition: background 0.2s;
   font-family: inherit;
+  min-height: 40px;
 }
 
 .contact-toggle:hover {
@@ -235,7 +236,7 @@
 }
 
 .remove-btn {
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: 10px;
   border: 1px solid #fecaca;
   background: #ffffff;
@@ -246,6 +247,7 @@
   transition: background 0.2s, border-color 0.2s;
   flex-shrink: 0;
   font-family: inherit;
+  min-height: 40px;
 }
 
 .remove-btn:hover {
@@ -260,6 +262,8 @@
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .empty-state p {
@@ -287,7 +291,7 @@
 
 .shortlisted-repos-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
@@ -305,6 +309,10 @@
 .shortlisted-repo-card:hover {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   border-color: #cbd5e1;
+}
+
+.shortlisted-repo-card .remove-btn {
+  margin-top: auto;
 }
 
 .shortlisted-repo-owner {
@@ -328,7 +336,10 @@
   color: #64748b;
   font-weight: 600;
   text-align: center;
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60px;
 }
 
 .shortlisted-repo-info {
@@ -344,6 +355,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .shortlisted-repo-name {
@@ -351,6 +363,11 @@
   font-weight: 700;
   color: #2563eb;
   text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
 }
 
 .shortlisted-repo-name:hover {
@@ -372,6 +389,12 @@
   color: #64748b;
   margin: 0;
   line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .repo-meta {
@@ -435,12 +458,186 @@
   }
 
   .shortlist-tab {
-    padding: 10px 16px;
-    font-size: 0.85rem;
+    padding: 12px 18px;
+    font-size: 0.9rem;
   }
 
   .filter-container {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .shortlist-card {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .remove-btn {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .shortlisted-repo-card {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .shortlist-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shortlist-tab {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .tab-count {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+
+  .shortlist-content {
+    gap: 12px;
+  }
+
+  .shortlist-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .card-avatar {
+    width: 42px;
+    height: 42px;
+    align-self: center;
+  }
+
+  .card-username {
+    font-size: 0.88rem;
+  }
+
+  .card-link {
+    font-size: 0.8rem;
+  }
+
+  .role-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+  }
+
+  .dev-message {
+    font-size: 0.75rem;
+  }
+
+  .skill-tag {
+    padding: 2px 6px;
+    font-size: 0.65rem;
+  }
+
+  .contact-toggle {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .contact-info {
+    padding: 8px 10px;
+  }
+
+  .contact-item {
+    font-size: 0.75rem;
+  }
+
+  .empty-state {
+    padding: 36px 16px;
+  }
+
+  .empty-state p {
+    font-size: 0.85rem;
+  }
+
+  .empty-state-btn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    width: 100%;
+  }
+
+  .shortlisted-repo-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .shortlisted-repo-owner {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: auto;
+  }
+
+  .repo-owner-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .shortlisted-repo-name {
+    font-size: 0.88rem;
+  }
+
+  .shortlisted-repo-desc {
+    font-size: 0.78rem;
+  }
+
+  .repo-lang {
+    font-size: 0.72rem;
+  }
+
+  .repo-stat {
+    font-size: 0.72rem;
+  }
+
+  .filter-container {
+    gap: 8px;
+  }
+
+  .filter-label {
+    font-size: 0.8rem;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .shortlist-card {
+    padding: 12px;
+  }
+
+  .card-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .card-username {
+    font-size: 0.82rem;
+  }
+
+  .shortlisted-repo-card {
+    padding: 12px;
   }
 }

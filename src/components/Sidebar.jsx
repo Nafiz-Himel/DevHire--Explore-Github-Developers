@@ -47,6 +47,10 @@ function Sidebar({ currentPage, onNavigate, onSignOut, children }) {
     { id: 'shortlist', label: 'Shortlist', icon: icons.star },
   ];
 
+  const handleNavigate = (page) => {
+    onNavigate(page);
+  };
+
   return (
     <div className={`dashboard-shell ${collapsed ? 'collapsed' : ''}`}>
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -61,7 +65,7 @@ function Sidebar({ currentPage, onNavigate, onSignOut, children }) {
               key={item.id}
               type="button"
               className={`sidebar-nav-item ${currentPage === item.id ? 'active' : ''}`}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => handleNavigate(item.id)}
             >
               <span className="sidebar-nav-icon">{item.icon}</span>
               {!collapsed && <span className="sidebar-nav-label">{item.label}</span>}

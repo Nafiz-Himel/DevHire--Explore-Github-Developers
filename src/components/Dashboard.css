@@ -1,11 +1,10 @@
 .dashboard-shell {
-  height: 100vh;
+  min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 0;
   background: #f3f6fb;
   transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
 }
 
 .dashboard-shell.collapsed {
@@ -17,9 +16,11 @@
   flex-direction: column;
   background: #0f172a;
   color: #cbd5e1;
+  position: sticky;
+  top: 0;
   height: 100vh;
   padding: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   border-right: 1px solid #1e293b;
 }
@@ -211,9 +212,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 24px;
-  overflow-y: auto;
-  height: 100vh;
+  padding: 24px 32px;
+  min-height: 100vh;
 }
 
 .dashboard-nav {
@@ -326,40 +326,265 @@
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 768px) {
   .dashboard-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: 72px 1fr;
+  }
+
+  .dashboard-shell.collapsed {
+    grid-template-columns: 72px 1fr;
   }
 
   .sidebar {
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
-    z-index: 50;
-    width: 260px !important;
-    height: 100vh !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    width: 72px;
+    transform: none;
   }
 
   .sidebar.collapsed {
-    width: 72px !important;
+    width: 72px;
+  }
+
+  .sidebar-header {
+    justify-content: center;
+    padding: 20px 12px;
+  }
+
+  .sidebar-logo-text {
+    display: none;
+  }
+
+  .sidebar-nav {
+    align-items: center;
+    padding: 12px 6px;
+    gap: 6px;
+  }
+
+  .sidebar-nav-item {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .sidebar-nav-label {
+    display: none;
+  }
+
+  .sidebar-divider {
+    margin: 8px 12px;
+  }
+
+  .sidebar-footer {
+    align-items: center;
+    padding: 8px 6px;
+  }
+
+  .sidebar-footer-btn {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .sidebar-footer-btn .sidebar-nav-label {
+    display: none;
   }
 
   .dashboard-cards {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 640px) {
-  .dashboard {
-    padding: 16px;
+  .charts-container {
+    grid-template-columns: 1fr;
   }
 
-  .dashboard-nav,
-  .dashboard-heading,
-  .dashboard-card,
-  .dashboard-footer {
+  .dashboard {
     padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-shell {
+    grid-template-columns: 56px 1fr;
+  }
+
+  .dashboard-shell.collapsed {
+    grid-template-columns: 56px 1fr;
+  }
+
+  .sidebar {
+    width: 56px;
+  }
+
+  .sidebar.collapsed {
+    width: 56px;
+  }
+
+  .sidebar-header {
+    padding: 16px 8px;
+    min-height: 56px;
+  }
+
+  .sidebar-logo-mark {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .sidebar-nav {
+    padding: 8px 4px;
+    gap: 4px;
+  }
+
+  .sidebar-nav-item {
+    padding: 8px;
+  }
+
+  .sidebar-nav-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sidebar-divider {
+    margin: 6px 8px;
+  }
+
+  .sidebar-footer {
+    padding: 6px 4px;
+  }
+
+  .sidebar-footer-btn {
+    padding: 8px;
+  }
+
+  .dashboard {
+    padding: 12px;
+  }
+
+  .dashboard-nav {
+    padding: 14px 18px;
+    border-radius: 16px;
+  }
+
+  .dashboard-title {
+    font-size: 1.2rem;
+  }
+
+  .dashboard-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .dashboard-heading {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .dashboard-heading h1 {
+    font-size: 1.3rem;
+  }
+
+  .dashboard-heading p {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .dashboard-card h3 {
+    font-size: 0.7rem;
+  }
+
+  .card-value {
+    font-size: 1.6rem;
+  }
+
+  .card-icon-bg {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .dashboard-footer {
+    padding: 14px 18px;
+    border-radius: 14px;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .charts-container {
+    grid-template-columns: 1fr;
+    margin-top: 20px;
+  }
+
+  .chart-box {
+    padding: 14px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard-shell {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .sidebar {
+    width: 48px;
+  }
+
+  .sidebar.collapsed {
+    width: 48px;
+  }
+
+  .sidebar-header {
+    padding: 12px 6px;
+    min-height: 48px;
+  }
+
+  .sidebar-logo-mark {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .sidebar-nav {
+    padding: 6px 3px;
+  }
+
+  .sidebar-nav-item {
+    padding: 6px;
+  }
+
+  .sidebar-nav-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dashboard {
+    padding: 8px;
+  }
+
+  .dashboard-nav {
+    padding: 12px 14px;
+  }
+
+  .dashboard-title {
+    font-size: 1rem;
+  }
+
+  .dashboard-heading {
+    padding: 14px;
+  }
+
+  .dashboard-heading h1 {
+    font-size: 1.1rem;
+  }
+
+  .card-value {
+    font-size: 1.4rem;
   }
 }
 
@@ -367,11 +592,20 @@
   margin-bottom: 24px;
 }
 
+@media (max-width: 480px) {
+  .search-section {
+    margin-bottom: 14px;
+  }
+}
+
 .custom-toast {
   position: fixed;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 20px;
+  right: 20px;
+  transform: none;
+  max-width: 400px;
+  margin: 0 auto;
   background-color: #2563eb;
   color: white;
   padding: 12px 24px;
@@ -380,6 +614,17 @@
   z-index: 9999;
   font-weight: 500;
   animation: fadeInOut 3s ease-in-out forwards;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .custom-toast {
+    left: 12px;
+    right: 12px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+  }
 }
 
 @keyframes fadeInOut {
@@ -404,13 +649,13 @@
 }
 
 .chart-box h3 {
-  font-size: 15px;
+  font-size: 0.94rem;
   color: #333;
   margin-bottom: 2px;
 }
 
 .chart-box p {
-  font-size: 13px;
+  font-size: 0.81rem;
   color: #888;
   margin-bottom: 20px;
 }
@@ -429,11 +674,11 @@
 
 .pie-stat-item strong {
   display: block;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .pie-stat-item span {
-  font-size: 11px;
+  font-size: 0.69rem;
   color: #666;
 }
 
