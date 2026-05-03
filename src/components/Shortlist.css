@@ -158,7 +158,7 @@
 .card-checkbox {
   position: absolute;
   top: 12px;
-  right: 12px;
+  right: 20px;
   cursor: pointer;
   z-index: 2;
 }
